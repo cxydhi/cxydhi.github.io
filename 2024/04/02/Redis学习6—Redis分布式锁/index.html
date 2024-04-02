@@ -1,0 +1,733 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="沉河不浮">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="1. 引言1.1. 分布式锁分布式锁（Distributed Lock）是一种用于分布式系统中实现互斥访问的机制，在分布式系统中，多个节点同时访问共享资源可能导致数据不一致或竞态条件的问题，分布式锁通过协调多个节点之间的访问，确保在同一时间只有一个节点能获得对共享资源的独占访问权限，从而解决并发访问问题。 1.2. 分布式锁实现方式常用的分布式锁实现方式有：1）基于数据库的分布式锁（乐观锁)：使用">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis学习6—Redis分布式锁">
+<meta property="og:url" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="1. 引言1.1. 分布式锁分布式锁（Distributed Lock）是一种用于分布式系统中实现互斥访问的机制，在分布式系统中，多个节点同时访问共享资源可能导致数据不一致或竞态条件的问题，分布式锁通过协调多个节点之间的访问，确保在同一时间只有一个节点能获得对共享资源的独占访问权限，从而解决并发访问问题。 1.2. 分布式锁实现方式常用的分布式锁实现方式有：1）基于数据库的分布式锁（乐观锁)：使用">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/1.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/2.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/3.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/4.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/5.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/6.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/7.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/24.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/8.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/9.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/10.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/11.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/12.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/13.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/14.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/15.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/16.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/17.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/18.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/19.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/20.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/21.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/22.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/23.png">
+<meta property="article:published_time" content="2024-04-02T13:37:06.000Z">
+<meta property="article:modified_time" content="2024-04-02T13:57:52.447Z">
+<meta property="article:author" content="沉河不浮">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/1.png">
+  
+  
+  
+  <title>Redis学习6—Redis分布式锁 - Hexo</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"cxydhi.github.io","root":"/","version":"1.9.5","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Fluid</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Redis学习6—Redis分布式锁"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-04-02 21:37" pubdate>
+          2024年4月2日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          18k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          152 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Redis学习6—Redis分布式锁</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h3 id="1-引言"><a href="#1-引言" class="headerlink" title="1. 引言"></a>1. 引言</h3><h4 id="1-1-分布式锁"><a href="#1-1-分布式锁" class="headerlink" title="1.1. 分布式锁"></a>1.1. 分布式锁</h4><p>分布式锁（Distributed Lock）是一种用于分布式系统中实现互斥访问的机制，在分布式系统中，多个节点同时访问共享资源可能导致数据不一致或竞态条件的问题，分布式锁通过协调多个节点之间的访问，确保在同一时间只有一个节点能获得对共享资源的独占访问权限，从而解决并发访问问题。</p>
+<h4 id="1-2-分布式锁实现方式"><a href="#1-2-分布式锁实现方式" class="headerlink" title="1.2. 分布式锁实现方式"></a>1.2. 分布式锁实现方式</h4><p>常用的分布式锁实现方式有：<br>1）基于数据库的分布式锁（乐观锁)：使用数据库的事务特性和唯一约束来实现分布式锁。通过在数据库中创建一个特定的表或记录来表示锁的状态，节点可以通过获取或释放该记录来获取或释放锁。<br>2）基于缓存的分布式锁：使用分布式缓存系统（如Redis）的原子操作来实现分布式锁，节点可以通过在缓存中设置一个特定的键值对来获取锁，并利用缓存的原子性操作来保证锁的互斥性。<br>3）基于zookeeper的分布式锁：zookeeper是一个分布式协调服务，可以用于实现分布式锁，节点可以通过在zookeeper中创建一个临时有序节点来表示锁的占用状态，通过比较节点 的序号来确定锁的拥有权。</p>
+<h3 id="2-基于数据库的分布式锁（乐观锁）"><a href="#2-基于数据库的分布式锁（乐观锁）" class="headerlink" title="2. 基于数据库的分布式锁（乐观锁）"></a>2. 基于数据库的分布式锁（乐观锁）</h3><p>基于数据库的分布式锁实现方案，一般是在表中加一个字段，用于表示版本号，当读取数据时，会读取对应的版本号，在更新数据的时候，也会相应的更新版本号（比如版本号递增），且在更新数据的时候，会判断当前版本号是否正确，以账户余额修改为例，具体流程如下：<br>1）查询账户信息（此时从数据库中查出的版本号为version1)<br>2）根据请求对账户对象进行操作<br>3）更新数据库(update t_account set 字段&#x3D;新值, version &#x3D; version + 1 where id &#x3D; #{accountId} and version &#x3D; version1的值)<br>在这个过程中，最重要的就是更新sql的语句，也就是在更新的时候，判断版本号是否被修改过，只有没有被修改过，我们才能更新成功。<br>示例如下：<br>首先，我们创建一个账户表：</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/1.png" srcset="/img/loading.gif" lazyload class="">
+<p>然后在账户表上插入一条数据，假设账户中有1000元</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/2.png" srcset="/img/loading.gif" lazyload class="">
+<p>对应的实体类和mapper：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@TableName(value = &quot;t_account&quot;)</span><br><span class="hljs-meta">@Data</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">Account</span> <span class="hljs-keyword">implements</span> <span class="hljs-title class_">Serializable</span> &#123;<br>    <span class="hljs-meta">@TableId(type = IdType.AUTO)</span><br>    <span class="hljs-keyword">private</span> Integer id;<br><br>    <span class="hljs-keyword">private</span> Integer userId;<br><br>    <span class="hljs-keyword">private</span> Integer balance;<br><br>    <span class="hljs-keyword">private</span> Date createTime;<br><br>    <span class="hljs-keyword">private</span> Date updateTime;<br><br>    <span class="hljs-keyword">private</span> Integer version;<br>&#125;<br><br><br><br><span class="hljs-meta">@Mapper</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">interface</span> <span class="hljs-title class_">AccountMapper</span> <span class="hljs-keyword">extends</span> <span class="hljs-title class_">BaseMapper</span>&lt;Account&gt; &#123;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>然后我们创建一个AccountService，先演示没有乐观锁时，会造成的问题</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">package</span> org.example.service;<br><br><span class="hljs-keyword">import</span> org.example.mapper.AccountMapper;<br><span class="hljs-keyword">import</span> org.example.pojo.Account;<br><span class="hljs-keyword">import</span> org.example.request.account.TakeOutMoneyRequest;<br><span class="hljs-keyword">import</span> org.springframework.beans.factory.annotation.Autowired;<br><span class="hljs-keyword">import</span> org.springframework.stereotype.Service;<br><br><span class="hljs-keyword">import</span> java.util.Date;<br><br><span class="hljs-meta">@Service</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">AccountService</span> &#123;<br>    <span class="hljs-meta">@Autowired</span><br>    <span class="hljs-keyword">private</span> AccountMapper accountMapper;<br><br>    <span class="hljs-keyword">public</span> <span class="hljs-type">boolean</span> <span class="hljs-title function_">takeOutMoneyWithoutOpLock</span><span class="hljs-params">(TakeOutMoneyRequest request)</span> <span class="hljs-keyword">throws</span> InterruptedException &#123;<br>        <span class="hljs-type">Integer</span> <span class="hljs-variable">accountId</span> <span class="hljs-operator">=</span> request.getAccountId();<br>        <span class="hljs-type">Account</span> <span class="hljs-variable">account</span> <span class="hljs-operator">=</span> accountMapper.selectById(accountId);<br>        <span class="hljs-keyword">if</span> (account.getBalance() - request.getMoney() &lt; <span class="hljs-number">0</span>) &#123;<br>            System.out.println(<span class="hljs-string">&quot;余额不足==============&quot;</span>);<br>            <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;<br>        &#125;<br>        Thread.sleep(<span class="hljs-number">1000</span>);<br><br>        account.setBalance(account.getBalance() - request.getMoney());<br>        account.setUpdateTime(<span class="hljs-keyword">new</span> <span class="hljs-title class_">Date</span>());<br>        <span class="hljs-keyword">return</span> accountMapper.updateById(account) &gt; <span class="hljs-number">0</span>;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>添加一个测试类，用于演示并发情况下，账户余额的减少</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">package</span> org.example.service;<br><br><span class="hljs-keyword">import</span> org.example.mapper.AccountMapper;<br><span class="hljs-keyword">import</span> org.example.pojo.Account;<br><span class="hljs-keyword">import</span> org.example.request.account.TakeOutMoneyRequest;<br><span class="hljs-keyword">import</span> org.springframework.beans.factory.annotation.Autowired;<br><span class="hljs-keyword">import</span> org.springframework.stereotype.Service;<br><br><span class="hljs-keyword">import</span> java.util.Date;<br><br><span class="hljs-meta">@Service</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">AccountService</span> &#123;<br>    <span class="hljs-meta">@Autowired</span><br>    <span class="hljs-keyword">private</span> AccountMapper accountMapper;<br><br>    <span class="hljs-keyword">public</span> <span class="hljs-type">boolean</span> <span class="hljs-title function_">takeOutMoneyWithoutOpLock</span><span class="hljs-params">(TakeOutMoneyRequest request)</span> <span class="hljs-keyword">throws</span> InterruptedException &#123;<br>        <span class="hljs-type">Integer</span> <span class="hljs-variable">accountId</span> <span class="hljs-operator">=</span> request.getAccountId();<br>        <span class="hljs-type">Account</span> <span class="hljs-variable">account</span> <span class="hljs-operator">=</span> accountMapper.selectById(accountId);<br>        <span class="hljs-keyword">if</span> (account.getBalance() - request.getMoney() &lt; <span class="hljs-number">0</span>) &#123;<br>            System.out.println(<span class="hljs-string">&quot;余额不足==============&quot;</span>);<br>            <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;<br>        &#125;<br>        Thread.sleep(<span class="hljs-number">1000</span>);<br><br>        account.setBalance(account.getBalance() - request.getMoney());<br>        account.setUpdateTime(<span class="hljs-keyword">new</span> <span class="hljs-title class_">Date</span>());<br>        <span class="hljs-keyword">return</span> accountMapper.updateById(account) &gt; <span class="hljs-number">0</span>;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>运行测试方法，结果如下图所示，说明都更新成功了</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/3.png" srcset="/img/loading.gif" lazyload class="">
+<p>然后查看数据库：</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/4.png" srcset="/img/loading.gif" lazyload class="">
+<p>如上图所示，原先我们的账户余额是1000元，每次扣除100元，经过10次扣减后，账户余额应该为0，但是因为并发问题，导致查询的时候，有多个请求查询到同一个值，最后导致数据不一致。<br>我们修改Account，添加使用乐观锁进行扣减余额的方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-type">boolean</span> <span class="hljs-title function_">takeOutMoneyWithOpLock</span><span class="hljs-params">(TakeOutMoneyRequest request)</span> <span class="hljs-keyword">throws</span> InterruptedException &#123;<br>     <span class="hljs-type">Integer</span> <span class="hljs-variable">accountId</span> <span class="hljs-operator">=</span> request.getAccountId();<br>     <span class="hljs-type">Account</span> <span class="hljs-variable">account</span> <span class="hljs-operator">=</span> accountMapper.selectById(accountId);<br>     <span class="hljs-keyword">if</span> (account.getBalance() - request.getMoney() &lt; <span class="hljs-number">0</span>) &#123;<br>         System.out.println(<span class="hljs-string">&quot;余额不足==============&quot;</span>);<br>         <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;<br>     &#125;<br>     Thread.sleep(<span class="hljs-number">1000</span>);<br><br>     LambdaUpdateWrapper&lt;Account&gt; lambdaUpdateWrapper = <span class="hljs-keyword">new</span> <span class="hljs-title class_">LambdaUpdateWrapper</span>&lt;&gt;();<br>     lambdaUpdateWrapper.set(Account::getVersion, account.getVersion() + <span class="hljs-number">1</span>)<br>             .set(Account::getUpdateTime, <span class="hljs-keyword">new</span> <span class="hljs-title class_">Date</span>())<br>                     .set(Account::getBalance, account.getBalance() - request.getMoney())<br>                             .eq(Account::getVersion, account.getVersion())<br>                                     .eq(Account::getId, request.getAccountId());<br>     <span class="hljs-keyword">return</span> accountMapper.update(account, lambdaUpdateWrapper) &gt; <span class="hljs-number">0</span>;<br> &#125;<br></code></pre></td></tr></table></figure>
+<p>我们把金额修改回1000，然后添加测试方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Test</span><br>   <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">testTakeoutMoneyWithOpLock</span><span class="hljs-params">()</span> <span class="hljs-keyword">throws</span> ExecutionException, InterruptedException &#123;<br>       <span class="hljs-type">ExecutorService</span> <span class="hljs-variable">executorService</span> <span class="hljs-operator">=</span> Executors.newFixedThreadPool(<span class="hljs-number">5</span>);<br>       Callable&lt;Boolean&gt; takeoutTask = () -&gt; &#123;<br>           <span class="hljs-type">TakeOutMoneyRequest</span> <span class="hljs-variable">request</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">TakeOutMoneyRequest</span>();<br>           request.setAccountId(<span class="hljs-number">1</span>);<br>           request.setMoney(<span class="hljs-number">100</span>);<br>           <span class="hljs-keyword">try</span> &#123;<br>               <span class="hljs-keyword">return</span> accountService.takeOutMoneyWithOpLock(request);<br>           &#125; <span class="hljs-keyword">catch</span> (InterruptedException e) &#123;<br>               <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;<br>           &#125;<br>       &#125;;<br>       List&lt;Future&lt;Boolean&gt;&gt; futureList = <span class="hljs-keyword">new</span> <span class="hljs-title class_">ArrayList</span>&lt;&gt;();<br>       <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> <span class="hljs-variable">i</span> <span class="hljs-operator">=</span> <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">10</span>; i++) &#123;<br>           Future&lt;Boolean&gt; future = executorService.submit(takeoutTask);<br>           futureList.add(future);<br>       &#125;<br><br>       <span class="hljs-keyword">for</span> (Future&lt;Boolean&gt; future : futureList) &#123;<br>           System.out.println(future.get());<br>       &#125;<br>   &#125;<br></code></pre></td></tr></table></figure>
+<p>运行测试方法，结果如下，说明只有两次更新成功了，其余的更新，都以为乐观锁被修改了，导致更新失败</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/5.png" srcset="/img/loading.gif" lazyload class="">
+<p>然后我们查看数据库，结果如下，因为扣减了两次，所有余额为800，这个数据对的上。</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/6.png" srcset="/img/loading.gif" lazyload class="">
+<p>乐观锁的实现思路，是基于对并发更新的乐观假设，也就是认为冲突的概率较低，因此在读取和提交数据时进行版本号或时间戳的比较，而不是在数据访问阶段进行加锁操作，避免了显示的锁竞争，提高了并发性能。但乐观锁并不能完全消除并发冲突，只是在提交数据时进行冲突检测和处理，如果系统中的并发冲突非常频繁，乐观锁的效率可能会下降。</p>
+<h3 id="3-基于Redis的分布式锁"><a href="#3-基于Redis的分布式锁" class="headerlink" title="3. 基于Redis的分布式锁"></a>3. 基于Redis的分布式锁</h3><h4 id="3-1-基于Redis的SETNX实现分布式锁"><a href="#3-1-基于Redis的SETNX实现分布式锁" class="headerlink" title="3.1. 基于Redis的SETNX实现分布式锁"></a>3.1. 基于Redis的SETNX实现分布式锁</h4><p>SETNX指的是set if not exist，也就是当key不存在的时候，设置key的值，存在的话，什么都不做, 其语法为:</p>
+<figure class="highlight gams"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs gams"><span class="hljs-keyword">set</span> key <span class="hljs-comment">value nx</span><br></code></pre></td></tr></table></figure>
+<p>如果我们要设置过期时间的话，可以使用</p>
+<figure class="highlight gams"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs gams"><span class="hljs-keyword">set</span> key <span class="hljs-comment">value ex</span> 时间 <span class="hljs-comment">nx</span><br></code></pre></td></tr></table></figure>
+<p>如下图所示，在使用nx指令的时候，只有在该key不存在的时候，才能设置成功</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/7.png" srcset="/img/loading.gif" lazyload class="">
+<p>我们修改之前的RedisUtils工具类，添加上和这两条指令相关的方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-type">boolean</span> <span class="hljs-title function_">setIfAbsent</span><span class="hljs-params">(String key, Object value)</span> &#123;<br>       <span class="hljs-keyword">return</span> redisTemplate.opsForValue().setIfAbsent(key, value);<br>   &#125;<br><br>   <span class="hljs-comment">/**</span><br><span class="hljs-comment">    * 不存在时设置值，适用与分布式锁的场景</span><br><span class="hljs-comment">    * <span class="hljs-doctag">@param</span> key</span><br><span class="hljs-comment">    * <span class="hljs-doctag">@param</span> value</span><br><span class="hljs-comment">    * <span class="hljs-doctag">@param</span> time</span><br><span class="hljs-comment">    * <span class="hljs-doctag">@return</span></span><br><span class="hljs-comment">    */</span><br>   <span class="hljs-keyword">public</span> <span class="hljs-type">boolean</span> <span class="hljs-title function_">setIfAbsent</span><span class="hljs-params">(String key, Object value, <span class="hljs-type">long</span> time)</span> &#123;<br>       <span class="hljs-keyword">return</span> setIfAbsent(key, value, time, TimeUnit.SECONDS);<br>   &#125;<br><br>   <span class="hljs-keyword">public</span> <span class="hljs-type">boolean</span> <span class="hljs-title function_">setIfAbsent</span><span class="hljs-params">(String key, Object value, <span class="hljs-type">long</span> time, TimeUnit timeUnit)</span> &#123;<br>       <span class="hljs-keyword">return</span> redisTemplate.opsForValue().setIfAbsent(key, value, time, timeUnit);<br>   &#125;<br></code></pre></td></tr></table></figure>
+<h5 id="3-1-1-通过setnx实现分布式锁"><a href="#3-1-1-通过setnx实现分布式锁" class="headerlink" title="3.1.1. 通过setnx实现分布式锁"></a>3.1.1. 通过setnx实现分布式锁</h5><p>具体流程如下：</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/24.png" srcset="/img/loading.gif" lazyload class="">
+<p>我们修改AccountService，添加和该指令相关的方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Autowired</span><br>  <span class="hljs-keyword">private</span> RedisUtils redisUtils;<br><br>  <span class="hljs-keyword">public</span> <span class="hljs-type">boolean</span> <span class="hljs-title function_">takeOutMoneyWithSetnx</span><span class="hljs-params">(TakeOutMoneyRequest request)</span> &#123;<br>      <span class="hljs-type">Integer</span> <span class="hljs-variable">accountId</span> <span class="hljs-operator">=</span> request.getAccountId();<br>      <span class="hljs-type">String</span> <span class="hljs-variable">key</span> <span class="hljs-operator">=</span> <span class="hljs-string">&quot;lock::&quot;</span> + accountId;<br><br>      <span class="hljs-type">boolean</span> <span class="hljs-variable">lock</span> <span class="hljs-operator">=</span> redisUtils.setIfAbsent(key, request.getAccountId());<br>      <span class="hljs-keyword">if</span> (!lock) &#123;<br>          <span class="hljs-comment">// 加锁失败，返回</span><br>          <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;<br>      &#125;<br>      <span class="hljs-comment">// 加锁成功</span><br>      <span class="hljs-keyword">try</span> &#123;<br>          <span class="hljs-type">Account</span> <span class="hljs-variable">account</span> <span class="hljs-operator">=</span> accountMapper.selectById(accountId);<br>          account.setBalance(account.getBalance() - request.getMoney());<br>          account.setUpdateTime(<span class="hljs-keyword">new</span> <span class="hljs-title class_">Date</span>());<br>          <span class="hljs-keyword">return</span> accountMapper.updateById(account) &gt; <span class="hljs-number">0</span>;<br>      &#125; <span class="hljs-keyword">finally</span> &#123;<br>          <span class="hljs-comment">// 释放锁</span><br>          redisUtils.removeKey(key);<br>      &#125;<br>  &#125;<br></code></pre></td></tr></table></figure>
+<p>添加测试方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Test</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">testTakeoutMoneyWithSetnx</span><span class="hljs-params">()</span> <span class="hljs-keyword">throws</span> ExecutionException, InterruptedException &#123;<br>        <span class="hljs-type">ExecutorService</span> <span class="hljs-variable">executorService</span> <span class="hljs-operator">=</span> Executors.newFixedThreadPool(<span class="hljs-number">5</span>);<br>        Callable&lt;Boolean&gt; takeoutTask = () -&gt; &#123;<br>            <span class="hljs-type">TakeOutMoneyRequest</span> <span class="hljs-variable">request</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">TakeOutMoneyRequest</span>();<br>            request.setAccountId(<span class="hljs-number">1</span>);<br>            request.setMoney(<span class="hljs-number">100</span>);<br>            <span class="hljs-keyword">return</span> accountService.takeOutMoneyWithSetnx(request);<br>        &#125;;<br>        List&lt;Future&lt;Boolean&gt;&gt; futureList = <span class="hljs-keyword">new</span> <span class="hljs-title class_">ArrayList</span>&lt;&gt;();<br>        <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> <span class="hljs-variable">i</span> <span class="hljs-operator">=</span> <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">10</span>; i++) &#123;<br>            Future&lt;Boolean&gt; future = executorService.submit(takeoutTask);<br>            futureList.add(future);<br>        &#125;<br><br>        <span class="hljs-keyword">for</span> (Future&lt;Boolean&gt; future : futureList) &#123;<br>            System.out.println(future.get());<br>        &#125;<br>    &#125;<br></code></pre></td></tr></table></figure>
+<p>测试结果如下：</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/8.png" srcset="/img/loading.gif" lazyload class="">
+<p>我们查看数据库，确实只扣减了100</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/9.png" srcset="/img/loading.gif" lazyload class="">
+<p>这里冲突次数比较多，因此更新的效率有点低，我们可以将对应的方法修改一下，加上重试，修改代码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Autowired</span><br>  <span class="hljs-keyword">private</span> RedisUtils redisUtils;<br><br>  <span class="hljs-keyword">public</span> <span class="hljs-type">boolean</span> <span class="hljs-title function_">takeOutMoneyWithSetnx</span><span class="hljs-params">(TakeOutMoneyRequest request)</span> &#123;<br>      <span class="hljs-type">Integer</span> <span class="hljs-variable">accountId</span> <span class="hljs-operator">=</span> request.getAccountId();<br>      <span class="hljs-type">String</span> <span class="hljs-variable">key</span> <span class="hljs-operator">=</span> <span class="hljs-string">&quot;lock::&quot;</span> + accountId;<br><br>      <span class="hljs-type">boolean</span> <span class="hljs-variable">lock</span> <span class="hljs-operator">=</span> redisUtils.setIfAbsent(key, request.getAccountId());<br>      <span class="hljs-keyword">if</span> (lock) &#123;<br>          <span class="hljs-comment">// 加锁成功</span><br>          <span class="hljs-keyword">try</span> &#123;<br>              <span class="hljs-type">Account</span> <span class="hljs-variable">account</span> <span class="hljs-operator">=</span> accountMapper.selectById(accountId);<br>              account.setBalance(account.getBalance() - request.getMoney());<br>              account.setUpdateTime(<span class="hljs-keyword">new</span> <span class="hljs-title class_">Date</span>());<br>              <span class="hljs-keyword">return</span> accountMapper.updateById(account) &gt; <span class="hljs-number">0</span>;<br>          &#125; <span class="hljs-keyword">finally</span> &#123;<br>              <span class="hljs-comment">// 释放锁</span><br>              redisUtils.removeKey(key);<br>          &#125;<br>      &#125;<br>      <span class="hljs-comment">// 加锁失败，进行重试</span><br>      <span class="hljs-keyword">try</span> &#123;<br>          Thread.sleep(<span class="hljs-number">100</span>);<br>      &#125; <span class="hljs-keyword">catch</span> (InterruptedException e) &#123;<br>          e.printStackTrace();<br>      &#125;<br>      <span class="hljs-keyword">return</span> takeOutMoneyWithSetnx(request);<br>  &#125;<br></code></pre></td></tr></table></figure>
+<p>这里休眠了一段时间，是因为要涉及到递归调用，可能会导致栈空间溢出，我们再次执行测试代码，结果如下，经过重试后，执行成功率变高。</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/10.png" srcset="/img/loading.gif" lazyload class="">
+<p>查看数据库，确实扣减了10次。</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/11.png" srcset="/img/loading.gif" lazyload class="">
+<p>但是，使用set key value nx存在一个问题，如果setnx占锁成功，但是服务器宕机了，没有执行删除锁的逻辑，那么就会造成这个锁一直没有被释放，最终导致死锁。</p>
+<h5 id="3-1-2-setnx-with-expire"><a href="#3-1-2-setnx-with-expire" class="headerlink" title="3.1.2. setnx with expire"></a>3.1.2. setnx with expire</h5><p>为解决setnx造成的死锁问题，我们在setnx的基础上，加上过期时间，来解决上述问题。我们给AccountService添加上对应的方法如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-type">boolean</span> <span class="hljs-title function_">takeOutMoneyWithSetnxExpire</span><span class="hljs-params">(TakeOutMoneyRequest request)</span> &#123;<br>       <span class="hljs-type">Integer</span> <span class="hljs-variable">accountId</span> <span class="hljs-operator">=</span> request.getAccountId();<br>       <span class="hljs-type">String</span> <span class="hljs-variable">key</span> <span class="hljs-operator">=</span> <span class="hljs-string">&quot;lock::&quot;</span> + accountId;<br>       <br>       <span class="hljs-comment">// 占有锁并设置过期时间</span><br>       <span class="hljs-type">boolean</span> <span class="hljs-variable">lock</span> <span class="hljs-operator">=</span> redisUtils.setIfAbsent(key, request.getAccountId(), TTL);<br>       <span class="hljs-keyword">if</span> (lock) &#123;<br>           <span class="hljs-comment">// 加锁成功</span><br>           <span class="hljs-keyword">try</span> &#123;<br>               <span class="hljs-type">Account</span> <span class="hljs-variable">account</span> <span class="hljs-operator">=</span> accountMapper.selectById(accountId);<br>               account.setBalance(account.getBalance() - request.getMoney());<br>               account.setUpdateTime(<span class="hljs-keyword">new</span> <span class="hljs-title class_">Date</span>());<br>               <span class="hljs-keyword">return</span> accountMapper.updateById(account) &gt; <span class="hljs-number">0</span>;<br>           &#125; <span class="hljs-keyword">finally</span> &#123;<br>               <span class="hljs-comment">// 释放锁</span><br>               redisUtils.removeKey(key);<br>           &#125;<br>       &#125;<br>       <span class="hljs-comment">// 加锁失败，进行重试</span><br>       <span class="hljs-keyword">try</span> &#123;<br>           Thread.sleep(<span class="hljs-number">100</span>);<br>       &#125; <span class="hljs-keyword">catch</span> (InterruptedException e) &#123;<br>           e.printStackTrace();<br>       &#125;<br>       <span class="hljs-keyword">return</span> takeOutMoneyWithSetnx(request);<br>   &#125;<br></code></pre></td></tr></table></figure>
+<p>添加上对应的测试方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Test</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">testTakeoutMoneyWithSetnxExpire</span><span class="hljs-params">()</span> <span class="hljs-keyword">throws</span> ExecutionException, InterruptedException &#123;<br>        <span class="hljs-type">ExecutorService</span> <span class="hljs-variable">executorService</span> <span class="hljs-operator">=</span> Executors.newFixedThreadPool(<span class="hljs-number">5</span>);<br>        Callable&lt;Boolean&gt; takeoutTask = () -&gt; &#123;<br>            <span class="hljs-type">TakeOutMoneyRequest</span> <span class="hljs-variable">request</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">TakeOutMoneyRequest</span>();<br>            request.setAccountId(<span class="hljs-number">1</span>);<br>            request.setMoney(<span class="hljs-number">100</span>);<br>            <span class="hljs-keyword">return</span> accountService.takeOutMoneyWithSetnxExpire(request);<br>        &#125;;<br>        List&lt;Future&lt;Boolean&gt;&gt; futureList = <span class="hljs-keyword">new</span> <span class="hljs-title class_">ArrayList</span>&lt;&gt;();<br>        <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> <span class="hljs-variable">i</span> <span class="hljs-operator">=</span> <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">10</span>; i++) &#123;<br>            Future&lt;Boolean&gt; future = executorService.submit(takeoutTask);<br>            futureList.add(future);<br>        &#125;<br><br>        <span class="hljs-keyword">for</span> (Future&lt;Boolean&gt; future : futureList) &#123;<br>            System.out.println(future.get());<br>        &#125;<br>    &#125;<br></code></pre></td></tr></table></figure>
+<p>测试结果如下：</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/12.png" srcset="/img/loading.gif" lazyload class="">
+<p>我们 查看数据库，数据库也确实扣减了10次</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/13.png" srcset="/img/loading.gif" lazyload class="">
+<p>但是，这个方案还是有一定缺陷，因为我们设置的这个过期时间，是根据我们的经验设置的，而业务代码的执行时长，是不确定的，那么可能存在这种情况，假设我们现在有三个请求过来，我们设置的过期时间是100ms<br>1）请求A占锁成功，执行业务代码<br>2）请求A执行100ms后，锁过期，但此时请求A的业务代码还未执行完毕<br>3）请求B占锁成功，执行业务代码<br>4）请求A执行完毕，执行释放锁的逻辑，导致把B占有的锁打开了<br>5）请求C占锁成功，执行业务代码<br>6）请求B执行完毕，执行释放锁的逻辑，导致把C占有的锁打开了<br>这里是因为，这三个请求占有的锁的key都是相同的，而我们在释放锁的时候，只是执行删除key的命令，并不在意这个锁是谁占有的。<br>这种情况，我们可以通过lua脚本来解决，思路如下：<br>1）占锁的时候，设置value值为用户标识<br>2）释放锁的时候，通过lua脚本，判断此时key对应的value值，与传入值是否相同，只有相同的时候，我们才执行删除key的逻辑。<br>我们修改刚才的方法，如下，在占锁的时候，我们设置value值为当前的线程id（这里是为了演示，实际业务场景中，应该是多个用户抢占同一个资源，因此可以将vlaue值设置为用户的标识，比如用户id），然后在释放资源的时候，执行lua脚本，判断value值是否相同，相同则执行删除操作。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Autowired</span><br>  <span class="hljs-keyword">private</span> RedisTemplate&lt;String, Object&gt; redisTemplate;<br>  <br> <span class="hljs-keyword">public</span> <span class="hljs-type">boolean</span> <span class="hljs-title function_">takeOutMoneyWithSetnxExpire</span><span class="hljs-params">(TakeOutMoneyRequest request)</span> &#123;<br>      <span class="hljs-type">Integer</span> <span class="hljs-variable">accountId</span> <span class="hljs-operator">=</span> request.getAccountId();<br>      <span class="hljs-type">String</span> <span class="hljs-variable">key</span> <span class="hljs-operator">=</span> <span class="hljs-string">&quot;lock::&quot;</span> + accountId;<br><br>      <span class="hljs-type">long</span> <span class="hljs-variable">threadId</span> <span class="hljs-operator">=</span> Thread.currentThread().getId();<br>      <span class="hljs-comment">// 占有锁并设置过期时间</span><br>      <span class="hljs-type">boolean</span> <span class="hljs-variable">lock</span> <span class="hljs-operator">=</span> redisUtils.setIfAbsent(key, threadId, TTL);<br>      <span class="hljs-keyword">if</span> (lock) &#123;<br>          <span class="hljs-comment">// 加锁成功</span><br>          <span class="hljs-keyword">try</span> &#123;<br>              <span class="hljs-type">Account</span> <span class="hljs-variable">account</span> <span class="hljs-operator">=</span> accountMapper.selectById(accountId);<br>              account.setBalance(account.getBalance() - request.getMoney());<br>              account.setUpdateTime(<span class="hljs-keyword">new</span> <span class="hljs-title class_">Date</span>());<br>              <span class="hljs-keyword">return</span> accountMapper.updateById(account) &gt; <span class="hljs-number">0</span>;<br>          &#125; <span class="hljs-keyword">finally</span> &#123;<br>              <span class="hljs-comment">// 释放锁</span><br>              <span class="hljs-comment">// lua脚本</span><br>              <span class="hljs-type">String</span> <span class="hljs-variable">script</span> <span class="hljs-operator">=</span> <span class="hljs-string">&quot;if redis.call(&#x27;get&#x27;, KEYS[1]) == ARGV[1] then return redis.call(&#x27;del&#x27;, KEYS[1]) else return 0 end&quot;</span>;<br>              redisTemplate.execute(<span class="hljs-keyword">new</span> <span class="hljs-title class_">DefaultRedisScript</span>&lt;Long&gt;(script, Long.class), Arrays.asList(key), threadId);<br>          &#125;<br>      &#125;<br>      <span class="hljs-comment">// 加锁失败，进行重试</span><br>      <span class="hljs-keyword">try</span> &#123;<br>          Thread.sleep(<span class="hljs-number">100</span>);<br>      &#125; <span class="hljs-keyword">catch</span> (InterruptedException e) &#123;<br>          e.printStackTrace();<br>      &#125;<br>      <span class="hljs-keyword">return</span> takeOutMoneyWithSetnx(request);<br>  &#125;<br></code></pre></td></tr></table></figure>
+<p>再次执行测试代码：</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/14.png" srcset="/img/loading.gif" lazyload class="">
+<p>查看数据库，确实减少10次</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/15.png" srcset="/img/loading.gif" lazyload class="">
+<p>但这里还有一个问题没有解决，因为我们设置的TTL，是我们的经验值，不准确，所以还是会存在，某个请求占有锁后，还没执行完毕，锁过期了，被另外一个请求占有，此时会出现两个请求都认为自己占有锁的情况。</p>
+<h4 id="3-2-Redisson"><a href="#3-2-Redisson" class="headerlink" title="3.2. Redisson"></a>3.2. Redisson</h4><h5 id="3-2-1-简介"><a href="#3-2-1-简介" class="headerlink" title="3.2.1. 简介"></a>3.2.1. 简介</h5><p>Redisson是一个在Redis基础上实现的Java驻内存数据网络，它不仅提供一系列的分布式java常用对象，还提供许多分布式服务，其宗旨是促进使用者对Redis的关注分离（Separation of Concern），从而让使用者能将精力更多集中在处理业务逻辑上。</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/16.png" srcset="/img/loading.gif" lazyload class="">
+<h5 id="3-2-2-SpringBoot-整合Redisson"><a href="#3-2-2-SpringBoot-整合Redisson" class="headerlink" title="3.2.2. SpringBoot 整合Redisson"></a>3.2.2. SpringBoot 整合Redisson</h5><p>引入redisson的maven依赖：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs xml"><span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.redisson<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>redisson<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>3.15.5<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br></code></pre></td></tr></table></figure>
+<p>然后自定义配置类（这里使用的是单节点Redis配置）</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">package</span> org.example.config;<br><br><span class="hljs-keyword">import</span> org.redisson.Redisson;<br><span class="hljs-keyword">import</span> org.redisson.api.RedissonClient;<br><span class="hljs-keyword">import</span> org.redisson.config.Config;<br><span class="hljs-keyword">import</span> org.springframework.context.annotation.Bean;<br><span class="hljs-keyword">import</span> org.springframework.context.annotation.Configuration;<br><br><span class="hljs-meta">@Configuration</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">RedissonConfiguration</span> &#123;<br>    <br>    <span class="hljs-meta">@Bean</span><br>    <span class="hljs-keyword">public</span> RedissonClient <span class="hljs-title function_">redisson</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-comment">// 1. 创建配置</span><br>        <span class="hljs-type">Config</span> <span class="hljs-variable">config</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Config</span>();<br>        <span class="hljs-comment">// 集群模式</span><br><span class="hljs-comment">//        config.useClusterServers().addNodeAddress(&quot;集群ip1&quot;, &quot;集群id2&quot;);</span><br>        <span class="hljs-comment">// 2. 根据Config创建出RedissonClient示例</span><br>        config.useSingleServer().setAddress(<span class="hljs-string">&quot;redis://127.0.0.1:6379&quot;</span>);<br>        <span class="hljs-keyword">return</span> Redisson.create(config);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>我们添加测试方法，来测试redisson的一些基本操作：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">package</span> org.example;<br><br><span class="hljs-keyword">import</span> com.alibaba.fastjson.JSONObject;<br><span class="hljs-keyword">import</span> org.junit.jupiter.api.Test;<br><span class="hljs-keyword">import</span> org.redisson.api.*;<br><span class="hljs-keyword">import</span> org.springframework.beans.factory.annotation.Autowired;<br><span class="hljs-keyword">import</span> org.springframework.boot.test.context.SpringBootTest;<br><br><span class="hljs-keyword">import</span> java.util.concurrent.TimeUnit;<br><br><span class="hljs-meta">@SpringBootTest</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">RedissonTest</span> &#123;<br>    <span class="hljs-meta">@Autowired</span><br>    <span class="hljs-keyword">private</span> RedissonClient redissonClient;<br><br>    <span class="hljs-meta">@Test</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">testRedisson</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-comment">// 字符串操作</span><br>        RBucket&lt;Object&gt; rBuck = redissonClient.getBucket(<span class="hljs-string">&quot;name&quot;</span>);<br>        rBuck.set(<span class="hljs-string">&quot;cxy&quot;</span>, <span class="hljs-number">30</span>, TimeUnit.SECONDS);<br>        System.out.println(redissonClient.getBucket(<span class="hljs-string">&quot;name&quot;</span>).get());<br><br>        <span class="hljs-comment">// 哈希操作</span><br>        RMap&lt;Object, Object&gt; student = redissonClient.getMap(<span class="hljs-string">&quot;student&quot;</span>);<br>        student.put(<span class="hljs-string">&quot;id&quot;</span>, <span class="hljs-number">1</span>);<br>        student.put(<span class="hljs-string">&quot;name&quot;</span>, <span class="hljs-string">&quot;cxy&quot;</span>);<br>        student.put(<span class="hljs-string">&quot;age&quot;</span>, <span class="hljs-number">20</span>);<br>        student.expire(<span class="hljs-number">30</span>, TimeUnit.SECONDS);<br><br>        System.out.println(redissonClient.getMap(<span class="hljs-string">&quot;student&quot;</span>).get(<span class="hljs-string">&quot;name&quot;</span>));<br><br>        <span class="hljs-comment">// 列表操作</span><br>        RList&lt;Object&gt; schools = redissonClient.getList(<span class="hljs-string">&quot;schools&quot;</span>);<br>        schools.add(<span class="hljs-string">&quot;华南理工大学&quot;</span>);<br>        schools.add(<span class="hljs-string">&quot;中山大学&quot;</span>);<br>        schools.add(<span class="hljs-string">&quot;暨南大学&quot;</span>);<br>        System.out.println(JSONObject.toJSONString(redissonClient.getList(<span class="hljs-string">&quot;schools&quot;</span>)));<br><br>        <span class="hljs-comment">// 集合操作</span><br>        RSet&lt;Object&gt; schoolSet = redissonClient.getSet(<span class="hljs-string">&quot;schoolSet&quot;</span>);<br>        schoolSet.add(<span class="hljs-string">&quot;华南理工大学&quot;</span>);<br>        schoolSet.add(<span class="hljs-string">&quot;中山大学&quot;</span>);<br>        schoolSet.add(<span class="hljs-string">&quot;暨南大学&quot;</span>);<br>        System.out.println(JSONObject.toJSONString(redissonClient.getSet(<span class="hljs-string">&quot;schoolSet&quot;</span>)));<br><br>        <span class="hljs-comment">// ZSet操作</span><br>        RScoredSortedSet&lt;Object&gt; schoolScoreSet = redissonClient.getScoredSortedSet(<span class="hljs-string">&quot;schoolScoreSet&quot;</span>);<br>        schoolScoreSet.add(<span class="hljs-number">100d</span>, <span class="hljs-string">&quot;华南理工大学&quot;</span>);<br>        schoolScoreSet.add(<span class="hljs-number">90d</span>, <span class="hljs-string">&quot;中山大学&quot;</span>);<br>        schoolScoreSet.add(<span class="hljs-number">80d</span>, <span class="hljs-string">&quot;暨南大学&quot;</span>);<br>        System.out.println(JSONObject.toJSONString(redissonClient.getScoredSortedSet(<span class="hljs-string">&quot;schoolScoreSet&quot;</span>)));<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>结果如下：</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/17.png" srcset="/img/loading.gif" lazyload class="">
+<h5 id="3-2-3-Redisson分布式锁"><a href="#3-2-3-Redisson分布式锁" class="headerlink" title="3.2.3. Redisson分布式锁"></a>3.2.3. Redisson分布式锁</h5><p>redisson加锁，可以使用lock方法，注意，在加锁的时候，处理完业务逻辑后要记得释放锁，测试代码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Test</span><br>  <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">testLock</span><span class="hljs-params">()</span> <span class="hljs-keyword">throws</span> ExecutionException, InterruptedException &#123;<br>      <span class="hljs-type">ExecutorService</span> <span class="hljs-variable">executorService</span> <span class="hljs-operator">=</span> Executors.newFixedThreadPool(<span class="hljs-number">2</span>);<br>      <span class="hljs-type">Runnable</span> <span class="hljs-variable">lockTask</span> <span class="hljs-operator">=</span> () -&gt; &#123;<br>          <span class="hljs-keyword">try</span> &#123;<br>              lock();<br>          &#125; <span class="hljs-keyword">catch</span> (InterruptedException e) &#123;<br>              e.printStackTrace();<br>          &#125;<br>      &#125;;<br>      List&lt; Future&gt; futureList = <span class="hljs-keyword">new</span> <span class="hljs-title class_">ArrayList</span>&lt;&gt;();<br>      <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> <span class="hljs-variable">i</span> <span class="hljs-operator">=</span> <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">2</span>; i++) &#123;<br>          futureList.add(executorService.submit(lockTask));<br>      &#125;<br>      <span class="hljs-keyword">for</span> (Future future : futureList) &#123;<br>          future.get();<br>      &#125;<br>  &#125;<br><br>  <span class="hljs-keyword">private</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">lock</span><span class="hljs-params">()</span> <span class="hljs-keyword">throws</span> InterruptedException &#123;<br>      <span class="hljs-type">RLock</span> <span class="hljs-variable">myLock</span> <span class="hljs-operator">=</span> redissonClient.getLock(<span class="hljs-string">&quot;myLock&quot;</span>);<br>      myLock.lock();<br>      <span class="hljs-keyword">try</span> &#123;<br>          System.out.println(<span class="hljs-string">&quot;currentTime:&quot;</span> + System.currentTimeMillis());<br>          Thread.sleep(<span class="hljs-number">2000</span>);<br>          System.out.println(<span class="hljs-string">&quot;执行业务代码&quot;</span>);<br>      &#125; <span class="hljs-keyword">finally</span> &#123;<br>          myLock.unlock();<br>      &#125;<br>  &#125;<br></code></pre></td></tr></table></figure>
+<p>测试结果如下，从执行结果可以看出，当多个线程抢占锁时，后面的锁，需要等待，即这个锁是阻塞的。</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/18.png" srcset="/img/loading.gif" lazyload class="">
+<p>如果不想阻塞的话，我们可以使用tryLock来上锁，结合刚才的accountService，我们先修改accountService，加上对应的方法</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Autowired</span><br>   <span class="hljs-keyword">private</span> RedissonClient redissonClient;<br><br>   <span class="hljs-keyword">public</span> <span class="hljs-type">boolean</span> <span class="hljs-title function_">takeoutMoneyWithRedissonTryLock</span><span class="hljs-params">(TakeOutMoneyRequest request)</span> <span class="hljs-keyword">throws</span> InterruptedException &#123;<br>       <span class="hljs-type">Integer</span> <span class="hljs-variable">accountId</span> <span class="hljs-operator">=</span> request.getAccountId();<br>       <span class="hljs-type">String</span> <span class="hljs-variable">key</span> <span class="hljs-operator">=</span> <span class="hljs-string">&quot;lock::&quot;</span> + accountId;<br><br>       <span class="hljs-type">RLock</span> <span class="hljs-variable">lock</span> <span class="hljs-operator">=</span> redissonClient.getLock(key);<br>       <span class="hljs-keyword">if</span> (lock.tryLock(<span class="hljs-number">2</span>, <span class="hljs-number">4</span>, TimeUnit.SECONDS)) &#123; <span class="hljs-comment">// 过期时间为2秒，最长存活时间为4秒</span><br>           <span class="hljs-comment">// 上锁成功</span><br>           <span class="hljs-keyword">try</span> &#123;<br>               Thread.sleep(<span class="hljs-number">1000</span>);<br>               <span class="hljs-type">Account</span> <span class="hljs-variable">account</span> <span class="hljs-operator">=</span> accountMapper.selectById(accountId);<br>               account.setBalance(account.getBalance() - request.getMoney());<br>               account.setUpdateTime(<span class="hljs-keyword">new</span> <span class="hljs-title class_">Date</span>());<br>               <span class="hljs-keyword">return</span> accountMapper.updateById(account) &gt; <span class="hljs-number">0</span>;<br>           &#125; <span class="hljs-keyword">finally</span> &#123;<br>               <span class="hljs-comment">// 释放锁</span><br>               lock.unlock();<br>           &#125;<br>       &#125;<br>       <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;<br>   &#125;<br></code></pre></td></tr></table></figure>
+<p>添加测试方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Test</span><br> <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">testTakeoutMoneyWithRedissonTryLock</span><span class="hljs-params">()</span> <span class="hljs-keyword">throws</span> ExecutionException, InterruptedException &#123;<br>     <span class="hljs-type">ExecutorService</span> <span class="hljs-variable">executorService</span> <span class="hljs-operator">=</span> Executors.newFixedThreadPool(<span class="hljs-number">5</span>);<br>     Callable&lt;Boolean&gt; takeoutTask = () -&gt; &#123;<br>         <span class="hljs-type">TakeOutMoneyRequest</span> <span class="hljs-variable">request</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">TakeOutMoneyRequest</span>();<br>         request.setAccountId(<span class="hljs-number">1</span>);<br>         request.setMoney(<span class="hljs-number">100</span>);<br>         <span class="hljs-keyword">return</span> accountService.takeoutMoneyWithRedissonTryLock(request);<br>     &#125;;<br>     List&lt;Future&lt;Boolean&gt;&gt; futureList = <span class="hljs-keyword">new</span> <span class="hljs-title class_">ArrayList</span>&lt;&gt;();<br>     <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> <span class="hljs-variable">i</span> <span class="hljs-operator">=</span> <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">10</span>; i++) &#123;<br>         Future&lt;Boolean&gt; future = executorService.submit(takeoutTask);<br>         futureList.add(future);<br>     &#125;<br><br>     <span class="hljs-keyword">for</span> (Future&lt;Boolean&gt; future : futureList) &#123;<br>         System.out.println(future.get());<br>     &#125;<br> &#125;<br></code></pre></td></tr></table></figure>
+<p>测试结果如下:</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/19.png" srcset="/img/loading.gif" lazyload class="">
+<p>查看数据库，减少的次数与上面的次数一致</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/20.png" srcset="/img/loading.gif" lazyload class="">
+<p>不过上面这种，成功率比较低，因此我们可以将tryLock改为lock方法，来上锁，我们修改accountService，添加相关方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-type">boolean</span> <span class="hljs-title function_">takeoutMoneyWithRedissonLock</span><span class="hljs-params">(TakeOutMoneyRequest request)</span> <span class="hljs-keyword">throws</span> InterruptedException &#123;<br>      <span class="hljs-type">Integer</span> <span class="hljs-variable">accountId</span> <span class="hljs-operator">=</span> request.getAccountId();<br>      <span class="hljs-type">String</span> <span class="hljs-variable">key</span> <span class="hljs-operator">=</span> <span class="hljs-string">&quot;lock::&quot;</span> + accountId;<br><br>      <span class="hljs-type">RLock</span> <span class="hljs-variable">lock</span> <span class="hljs-operator">=</span> redissonClient.getLock(key);<br>      lock.lock(<span class="hljs-number">2</span>, TimeUnit.SECONDS);<br>      <span class="hljs-comment">// 上锁成功</span><br>      <span class="hljs-keyword">try</span> &#123;<br>          Thread.sleep(<span class="hljs-number">1000</span>);<br>          <span class="hljs-type">Account</span> <span class="hljs-variable">account</span> <span class="hljs-operator">=</span> accountMapper.selectById(accountId);<br>          account.setBalance(account.getBalance() - request.getMoney());<br>          account.setUpdateTime(<span class="hljs-keyword">new</span> <span class="hljs-title class_">Date</span>());<br>          <span class="hljs-keyword">return</span> accountMapper.updateById(account) &gt; <span class="hljs-number">0</span>;<br>      &#125; <span class="hljs-keyword">finally</span> &#123;<br>          <span class="hljs-comment">// 释放锁</span><br>          lock.unlock();<br>      &#125;<br>  &#125;<br></code></pre></td></tr></table></figure>
+<p>添加测试方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Test</span><br>   <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">testTakeoutMoneyWithRedissonLock</span><span class="hljs-params">()</span> <span class="hljs-keyword">throws</span> ExecutionException, InterruptedException &#123;<br>       <span class="hljs-type">ExecutorService</span> <span class="hljs-variable">executorService</span> <span class="hljs-operator">=</span> Executors.newFixedThreadPool(<span class="hljs-number">5</span>);<br>       Callable&lt;Boolean&gt; takeoutTask = () -&gt; &#123;<br>           <span class="hljs-type">TakeOutMoneyRequest</span> <span class="hljs-variable">request</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">TakeOutMoneyRequest</span>();<br>           request.setAccountId(<span class="hljs-number">1</span>);<br>           request.setMoney(<span class="hljs-number">100</span>);<br>           <span class="hljs-keyword">return</span> accountService.takeoutMoneyWithRedissonLock(request);<br>       &#125;;<br>       List&lt;Future&lt;Boolean&gt;&gt; futureList = <span class="hljs-keyword">new</span> <span class="hljs-title class_">ArrayList</span>&lt;&gt;();<br>       <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> <span class="hljs-variable">i</span> <span class="hljs-operator">=</span> <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">10</span>; i++) &#123;<br>           Future&lt;Boolean&gt; future = executorService.submit(takeoutTask);<br>           futureList.add(future);<br>       &#125;<br><br>       <span class="hljs-keyword">for</span> (Future&lt;Boolean&gt; future : futureList) &#123;<br>           System.out.println(future.get());<br>       &#125;<br>   &#125;<br></code></pre></td></tr></table></figure>
+<p>测试结果如下：</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/21.png" srcset="/img/loading.gif" lazyload class="">
+<p>查看数据库，扣减次数确实为10次。</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/22.png" srcset="/img/loading.gif" lazyload class="">
+<h5 id="3-2-4-watch-dog-看门狗机制"><a href="#3-2-4-watch-dog-看门狗机制" class="headerlink" title="3.2.4. watch dog 看门狗机制"></a>3.2.4. watch dog 看门狗机制</h5><img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/23.png" srcset="/img/loading.gif" lazyload class="">
+<p>Redisson中的分布式锁自带自动续期机制，其提供了一个专门用来监控和续期锁的Watch Dog（看门狗），如果操作共享资源的线程还没有执行完成的话，Watch Dog会不断延长锁的过期时间，从而保证锁不会因为超时而被释放。</p>
+<h3 id="4-参考文章"><a href="#4-参考文章" class="headerlink" title="4. 参考文章"></a>4. 参考文章</h3><p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/374306005">https://zhuanlan.zhihu.com/p/374306005</a><br><a target="_blank" rel="noopener" href="https://my.oschina.net/u/4499317/blog/5039486">https://my.oschina.net/u/4499317/blog/5039486</a><br><a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_15071263/article/details/101277474">https://blog.csdn.net/qq_15071263/article/details/101277474</a><br><a target="_blank" rel="noopener" href="https://www.cnblogs.com/jelly12345/p/14699492.html">https://www.cnblogs.com/jelly12345/p/14699492.html</a></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Redis学习6—Redis分布式锁</div>
+      <div>https://cxydhi.github.io/2024/04/02/Redis学习6—Redis分布式锁/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>沉河不浮</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年4月2日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/04/02/Redis%E5%AD%A6%E4%B9%A05-Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%AD%BE%E5%88%B0/" title="Redis学习5-Redis应用之签到">
+                        <span class="hidden-mobile">Redis学习5-Redis应用之签到</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

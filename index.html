@@ -224,6 +224,204 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
+        <a href="/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/" target="_self">
+          Redis学习6—Redis分布式锁
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/" target="_self">
+        <div>
+          1. 引言1.1. 分布式锁分布式锁（Distributed Lock）是一种用于分布式系统中实现互斥访问的机制，在分布式系统中，多个节点同时访问共享资源可能导致数据不一致或竞态条件的问题，分布式锁通过协调多个节点之间的访问，确保在同一时间只有一个节点能获得对共享资源的独占访问权限，从而解决并发访问问题。 1.2. 分布式锁实现方式常用的分布式锁实现方式有：1）基于数据库的分布式锁（乐观锁)：使用
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-04-02 21:37" pubdate>
+              2024-04-02
+            </time>
+          </div>
+        
+        
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2024/04/02/Redis%E5%AD%A6%E4%B9%A05-Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%AD%BE%E5%88%B0/" target="_self">
+          Redis学习5-Redis应用之签到
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/04/02/Redis%E5%AD%A6%E4%B9%A05-Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%AD%BE%E5%88%B0/" target="_self">
+        <div>
+          1. Redis位图bitMap位图由一系列二进制位组成，每个位可以被设置为1或0，当我们在处理需要高效存储和操作大量二进制位数据的适合，位图是一个非常有用的工具。位图操作命令有：  SETBIT：设置位图中指定位置的位的值。可以将位设置为 0 或 1。 GETBIT：获取位图中指定位置的位的值。 BITCOUNT：计算位图中置为 1 的位的数量。 BITOP：对多个位图执行逻辑运算（AND、OR
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-04-02 21:34" pubdate>
+              2024-04-02
+            </time>
+          </div>
+        
+        
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2024/04/02/Redis%E5%AD%A6%E4%B9%A04%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E9%99%90%E6%B5%81/" target="_self">
+          Redis学习4—Redis应用之限流
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/04/02/Redis%E5%AD%A6%E4%B9%A04%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E9%99%90%E6%B5%81/" target="_self">
+        <div>
+          1. 引言Redis作为一个内存数据库其读写速度非常快，并且支持原子操作，这使得它非常适合处理频繁的请求，一般情况下，我们会使用Redis作为缓存数据库，但处理做缓存数据库之外，Redis的应用还十分广泛，比如这一节，我们将讲解Redis在限流方面的应用。 2. 通过setnx实现限流我们通过切面，来获取某给接口在一段时间内的请求次数，当请求次数超过某个值时，抛出限流异常，直接返回，不执行业务逻辑
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-04-02 21:27" pubdate>
+              2024-04-02
+            </time>
+          </div>
+        
+        
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/" target="_self">
+          Redis学习3—Redis应用之缓存
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/" target="_self">
+        <div>
+          1. 引言1.1. 缓存的意义Redis作为一个NoSql数据库，被广泛的当作缓存数据库使用，所谓缓存，就是数据交换的缓冲区。使用缓存的具体原因有：  缓存数据存储于代码中，而代码运行在内存中，内存的读写性能远高于磁盘，通过缓存，可以大大降低用户访问并发量带来的服务器读写压力。 实际开发过程中，企业的数据量，少则几十万，多则上千万，如此大的数据量，如果没有缓存来作为“避震器”，系统是几乎撑不住的，
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-04-02 21:12" pubdate>
+              2024-04-02
+            </time>
+          </div>
+        
+        
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2024/04/02/Redis%E5%AD%A6%E4%B9%A02%E2%80%94SpringBoot%E6%95%B4%E5%90%88Redis%E3%80%81Redis%E5%B7%A5%E5%85%B7%E7%B1%BB/" target="_self">
+          Redis学习2—SpringBoot整合Redis、Redis工具类
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/04/02/Redis%E5%AD%A6%E4%B9%A02%E2%80%94SpringBoot%E6%95%B4%E5%90%88Redis%E3%80%81Redis%E5%B7%A5%E5%85%B7%E7%B1%BB/" target="_self">
+        <div>
+          1. 依赖和配置1.1. pom.xmlSpringBoot整合Redis，需要引入spring-boot-starter-data-redis依赖 1234&lt;dependency&gt;          &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;          &lt;artifactId&gt;spring-boo
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-04-02 21:08" pubdate>
+              2024-04-02
+            </time>
+          </div>
+        
+        
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2024/04/02/Redis%E5%AD%A6%E4%B9%A01-Redis%E7%AE%80%E4%BB%8B%E3%80%81%E5%9F%BA%E7%A1%80/" target="_self">
+          Redis学习1-Redis简介、基础
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/04/02/Redis%E5%AD%A6%E4%B9%A01-Redis%E7%AE%80%E4%BB%8B%E3%80%81%E5%9F%BA%E7%A1%80/" target="_self">
+        <div>
+          1. 介绍1.1. redis简介Redis(Remote Dictonary Server) 是由Salvatore Sanfilippo开发的key-value缓存数据库，基于C语言开发。目前市面上，Redis和MongoDB是当前使用最广泛的NoSQL，而就Redis技术而言，它的性能十分优越，可以支持每秒十几万此的读&#x2F;写操作，其性能远超数据库，并且还支持集群、分布式、主从同步等配
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-04-02 20:55" pubdate>
+              2024-04-02
+            </time>
+          </div>
+        
+        
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
         <a href="/2024/04/02/Nacos%E5%AD%A6%E4%B9%A02%E2%80%94Nacos%E9%85%8D%E7%BD%AE%E4%B8%AD%E5%BF%83/" target="_self">
           Nacos学习2—Nacos配置中心
         </a>
@@ -350,73 +548,13 @@
     </article>
   </div>
 
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2024/04/02/%E7%BA%BF%E7%A8%8B%E6%B1%A0/" target="_self">
-          线程池
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/04/02/%E7%BA%BF%E7%A8%8B%E6%B1%A0/" target="_self">
-        <div>
-          Executors是一个工厂类，提供了创建几种预配置线程池实例地方法，如果不需要应用任何自定义地微调，可以调用这些方法创建默认配置地线程池。Executors工厂类提供地线程池有以下几种：1）newCachedThreadPool(): 创建一个可缓存地线程池，这个线程池地线程数量可以根据需要自动扩展，如果有可用的空闲线程，就会重用它们；如果没有可用的线程，就会创建一个新线程，适用于执行大量的短期
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2024-04-02 16:36" pubdate>
-              2024-04-02
-            </time>
-          </div>
-        
-        
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2024/04/02/hello-world/" target="_self">
-          Hello World
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/04/02/hello-world/" target="_self">
-        <div>
-          Welcome to Hexo! This is your very first post. Check documentation for more info. If you get any problems when using Hexo, you can find the answer in troubleshooting or you can ask me on GitHub. Quick
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2024-04-02 16:28" pubdate>
-              2024-04-02
-            </time>
-          </div>
-        
-        
-        
-      </div>
-    </article>
-  </div>
 
 
+  <nav aria-label="navigation">
+    <span class="pagination" id="pagination">
+      <span class="page-number current">1</span><a class="page-number" href="/page/2/#board">2</a><a class="extend next" rel="next" href="/page/2/#board"><i class="iconfont icon-arrowright"></i></a>
+    </span>
+  </nav>
 
 
 
