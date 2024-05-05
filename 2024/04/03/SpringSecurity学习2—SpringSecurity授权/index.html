@@ -1,0 +1,791 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="沉河不浮">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="1. 引言Spring Security进行认证和鉴权的时候，就是利用一系列的Filter来进行拦截的。如下图所示，一个请求想要访问到API就会从左到右经过蓝线框里的过滤器，其中黄色部分是负责认证的过滤器，蓝色部分负责异常处理，橙色部分则是负责授权。经过一些列拦截最终访问到我们的API。  这里需要重点关注两个过滤器：UsernamePasswordAuthenticationFilter负责登录">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SpringSecurity学习2—SpringSecurity授权">
+<meta property="og:url" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="1. 引言Spring Security进行认证和鉴权的时候，就是利用一系列的Filter来进行拦截的。如下图所示，一个请求想要访问到API就会从左到右经过蓝线框里的过滤器，其中黄色部分是负责认证的过滤器，蓝色部分负责异常处理，橙色部分则是负责授权。经过一些列拦截最终访问到我们的API。  这里需要重点关注两个过滤器：UsernamePasswordAuthenticationFilter负责登录">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/1.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/2.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/3.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/4.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/5.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/6.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/7.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/8.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/9.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/10.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/11.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/12.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/13.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/14.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/15.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/16.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/17.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/18.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/19.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/20.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/21.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/22.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/23.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/24.png">
+<meta property="article:published_time" content="2024-04-03T07:36:26.000Z">
+<meta property="article:modified_time" content="2024-04-03T07:53:35.920Z">
+<meta property="article:author" content="沉河不浮">
+<meta property="article:tag" content="SpringBoot">
+<meta property="article:tag" content="SpringSecurity">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/1.png">
+  
+  
+  
+  <title>SpringSecurity学习2—SpringSecurity授权 - Hexo</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"cxydhi.github.io","root":"/","version":"1.9.5","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Fluid</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="SpringSecurity学习2—SpringSecurity授权"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-04-03 15:36" pubdate>
+          2024年4月3日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          14k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          120 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">SpringSecurity学习2—SpringSecurity授权</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h3 id="1-引言"><a href="#1-引言" class="headerlink" title="1. 引言"></a>1. 引言</h3><p>Spring Security进行认证和鉴权的时候，就是利用一系列的Filter来进行拦截的。如下图所示，一个请求想要访问到API就会从左到右经过蓝线框里的过滤器，其中黄色部分是负责认证的过滤器，蓝色部分负责异常处理，橙色部分则是负责授权。经过一些列拦截最终访问到我们的API。</p>
+<img src="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/1.png" srcset="/img/loading.gif" lazyload class="">
+<p>这里需要重点关注两个过滤器：UsernamePasswordAuthenticationFilter负责登录认证，FilterSecurityInterceptor负责权限授权。<br>在SpringSecurity中，会使用默认的FilterSecurityInterceptor来进行权限校验，在FilterSecurityInterceptor中会从SecurityContextHolder获取其中的Authentication，然后获取其中的权限信息，判断当前用户是否拥有访问当前资源所需的权限。<br>SpringSecurity中的Authentication类</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">interface</span> <span class="hljs-title class_">Authentication</span> <span class="hljs-keyword">extends</span> <span class="hljs-title class_">Principal</span>, Serializable &#123;<br>	<span class="hljs-comment">//权限数据列表</span><br>    Collection&lt;? <span class="hljs-keyword">extends</span> <span class="hljs-title class_">GrantedAuthority</span>&gt; getAuthorities();<br><br>    Object <span class="hljs-title function_">getCredentials</span><span class="hljs-params">()</span>;<br><br>    Object <span class="hljs-title function_">getDetails</span><span class="hljs-params">()</span>;<br><br>    Object <span class="hljs-title function_">getPrincipal</span><span class="hljs-params">()</span>;<br><br>    <span class="hljs-type">boolean</span> <span class="hljs-title function_">isAuthenticated</span><span class="hljs-params">()</span>;<br><br>    <span class="hljs-keyword">void</span> <span class="hljs-title function_">setAuthenticated</span><span class="hljs-params">(<span class="hljs-type">boolean</span> var1)</span> <span class="hljs-keyword">throws</span> IllegalArgumentException;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>Principal: 用户信息，没有认证时一般是用户名，认证后一般是用户对象<br>Credentials: 用户凭证，一般是密码<br>Authorities: 用户权限</p>
+<h3 id="2-代码示例"><a href="#2-代码示例" class="headerlink" title="2. 代码示例"></a>2. 代码示例</h3><p>将权限信息，赋值给UserDetails<br>在我们之前自定义的UserContextDetails中，已经有对应的权限信息了，因此，我们可以将其权限信息，转化为对应的Authority类，我们修改MyUserDetails类，将UserContextDetails中和权限相关的类，转化为SpringSecurity体系中的权限类。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">package</span> com.yang.infrastructure.security;<br><br><span class="hljs-keyword">import</span> com.alibaba.fastjson.JSONObject;<br><span class="hljs-keyword">import</span> com.yang.infrastructure.auth.PermissionDetails;<br><span class="hljs-keyword">import</span> com.yang.infrastructure.auth.UserContextDetails;<br><span class="hljs-keyword">import</span> lombok.Data;<br><span class="hljs-keyword">import</span> org.springframework.security.core.GrantedAuthority;<br><span class="hljs-keyword">import</span> org.springframework.security.core.authority.AuthorityUtils;<br><span class="hljs-keyword">import</span> org.springframework.security.core.userdetails.UserDetails;<br><span class="hljs-keyword">import</span> org.springframework.util.CollectionUtils;<br><br><span class="hljs-keyword">import</span> java.util.ArrayList;<br><span class="hljs-keyword">import</span> java.util.Collection;<br><span class="hljs-keyword">import</span> java.util.List;<br><span class="hljs-keyword">import</span> java.util.stream.Collectors;<br><br><span class="hljs-meta">@Data</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">MyUserDetails</span> <span class="hljs-keyword">implements</span> <span class="hljs-title class_">UserDetails</span> &#123;<br>    <span class="hljs-keyword">private</span> UserContextDetails userContextDetails;<br><br>    <span class="hljs-keyword">private</span> String password;<br><br>    <span class="hljs-keyword">private</span> List&lt;GrantedAuthority&gt; authorityList = <span class="hljs-keyword">new</span> <span class="hljs-title class_">ArrayList</span>&lt;&gt;();<br><br>    <span class="hljs-keyword">public</span> <span class="hljs-title function_">MyUserDetails</span><span class="hljs-params">(UserContextDetails userContextDetails)</span> &#123;<br>        <span class="hljs-built_in">this</span>.userContextDetails = userContextDetails;<br>        richAuthority();<br>    &#125;<br><br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">richAuthority</span><span class="hljs-params">()</span> &#123;<br>        List&lt;PermissionDetails&gt; permissionDetails = userContextDetails.getPermissionDetails();<br>        <span class="hljs-keyword">if</span> (CollectionUtils.isEmpty(permissionDetails)) &#123;<br>            <span class="hljs-keyword">return</span>;<br>        &#125;<br>        String[] permissions = permissionDetails.stream().map(PermissionDetails::getName)<br>                .collect(Collectors.toList()).toArray(<span class="hljs-keyword">new</span> <span class="hljs-title class_">String</span>[<span class="hljs-number">0</span>]);<br>        <span class="hljs-built_in">this</span>.authorityList = AuthorityUtils.createAuthorityList(permissions);<br>    &#125;<br><br>    <span class="hljs-keyword">public</span> <span class="hljs-title function_">MyUserDetails</span><span class="hljs-params">(UserContextDetails userContextDetails, String password)</span> &#123;<br>        <span class="hljs-built_in">this</span>.userContextDetails = userContextDetails;<br>        <span class="hljs-built_in">this</span>.password = password;<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> Collection&lt;? <span class="hljs-keyword">extends</span> <span class="hljs-title class_">GrantedAuthority</span>&gt; getAuthorities() &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-built_in">this</span>.authorityList;<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> String <span class="hljs-title function_">getPassword</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-built_in">this</span>.password;<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> String <span class="hljs-title function_">getUsername</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-keyword">return</span> userContextDetails.getUsername();<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-type">boolean</span> <span class="hljs-title function_">isAccountNonExpired</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-type">boolean</span> <span class="hljs-title function_">isAccountNonLocked</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-type">boolean</span> <span class="hljs-title function_">isCredentialsNonExpired</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-type">boolean</span> <span class="hljs-title function_">isEnabled</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>然后还需要修改JwtTokenVerifyFilter类，在构建UsernamePasswordAuthenticationToken的时候，将权限赋值上去。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">package</span> com.yang.infrastructure.security.filter;<br><br><span class="hljs-keyword">import</span> com.alibaba.fastjson.JSONObject;<br><span class="hljs-keyword">import</span> com.yang.domain.data.Role;<br><span class="hljs-keyword">import</span> com.yang.infrastructure.auth.PermissionDetails;<br><span class="hljs-keyword">import</span> com.yang.infrastructure.auth.UserContextDetails;<br><span class="hljs-keyword">import</span> com.yang.infrastructure.auth.config.JwtTokenProperty;<br><span class="hljs-keyword">import</span> com.yang.infrastructure.auth.request.JwtTokenVerifyRequest;<br><span class="hljs-keyword">import</span> com.yang.infrastructure.auth.response.JwtTokenVerifyDTO;<br><span class="hljs-keyword">import</span> com.yang.infrastructure.auth.service.JwtTokenService;<br><span class="hljs-keyword">import</span> com.yang.infrastructure.security.MyUserDetails;<br><span class="hljs-keyword">import</span> com.yang.infrastructure.utils.RedisUtils;<br><span class="hljs-keyword">import</span> com.yang.infrastructure.utils.SpringContextUtils;<br><span class="hljs-keyword">import</span> org.apache.commons.lang3.StringUtils;<br><span class="hljs-keyword">import</span> org.springframework.security.authentication.UsernamePasswordAuthenticationToken;<br><span class="hljs-keyword">import</span> org.springframework.security.core.context.SecurityContextHolder;<br><span class="hljs-keyword">import</span> org.springframework.security.core.userdetails.UserDetails;<br><span class="hljs-keyword">import</span> org.springframework.web.filter.OncePerRequestFilter;<br><br><span class="hljs-keyword">import</span> javax.servlet.FilterChain;<br><span class="hljs-keyword">import</span> javax.servlet.ServletException;<br><span class="hljs-keyword">import</span> javax.servlet.http.HttpServletRequest;<br><span class="hljs-keyword">import</span> javax.servlet.http.HttpServletResponse;<br><span class="hljs-keyword">import</span> java.io.IOException;<br><span class="hljs-keyword">import</span> java.util.List;<br><span class="hljs-keyword">import</span> java.util.stream.Collectors;<br><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">JwtTokenVerifyFilter</span> <span class="hljs-keyword">extends</span> <span class="hljs-title class_">OncePerRequestFilter</span> &#123;<br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">protected</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">doFilterInternal</span><span class="hljs-params">(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)</span> <span class="hljs-keyword">throws</span> ServletException, IOException &#123;<br>        <span class="hljs-type">String</span> <span class="hljs-variable">token</span> <span class="hljs-operator">=</span> request.getHeader(<span class="hljs-string">&quot;token&quot;</span>);<br>        <span class="hljs-keyword">if</span> (StringUtils.isEmpty(token)) &#123;<br>            filterChain.doFilter(request, response);<br>            <span class="hljs-keyword">return</span>;<br>        &#125;<br><br>        <span class="hljs-type">UserContextDetails</span> <span class="hljs-variable">userContextDetails</span> <span class="hljs-operator">=</span> <span class="hljs-literal">null</span>;<br>        <span class="hljs-type">Object</span> <span class="hljs-variable">userDetailsFromRedis</span> <span class="hljs-operator">=</span> getUserDetailsFromRedis(token);<br>        <span class="hljs-keyword">if</span> (userDetailsFromRedis != <span class="hljs-literal">null</span>) &#123;<br>            userContextDetails = (UserContextDetails) userDetailsFromRedis;<br>        &#125;<br><br>        <span class="hljs-keyword">if</span> (userContextDetails == <span class="hljs-literal">null</span>) &#123;<br>            <span class="hljs-type">JwtTokenService</span> <span class="hljs-variable">jwtTokenService</span> <span class="hljs-operator">=</span> SpringContextUtils.getBeanOfType(JwtTokenService.class);<br>            <span class="hljs-type">JwtTokenProperty</span> <span class="hljs-variable">jwtTokenProperty</span> <span class="hljs-operator">=</span> SpringContextUtils.getBeanOfType(JwtTokenProperty.class);<br><br>            <span class="hljs-type">JwtTokenVerifyRequest</span> <span class="hljs-variable">jwtTokenVerifyRequest</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">JwtTokenVerifyRequest</span>();<br>            jwtTokenVerifyRequest.setToken(token);<br>            jwtTokenVerifyRequest.setSecret(jwtTokenProperty.getSecret());<br><br>            <span class="hljs-type">JwtTokenVerifyDTO</span> <span class="hljs-variable">verify</span> <span class="hljs-operator">=</span> jwtTokenService.verify(jwtTokenVerifyRequest);<br>            <span class="hljs-keyword">if</span> (verify == <span class="hljs-literal">null</span>) &#123;<br>                filterChain.doFilter(request, response);<br>                <span class="hljs-keyword">return</span>;<br>            &#125;<br><br>            userContextDetails = <span class="hljs-keyword">new</span> <span class="hljs-title class_">UserContextDetails</span>();<br>            userContextDetails.setId(Integer.valueOf(verify.getSubject()));<br>            userContextDetails.setToken(token);<br>            userContextDetails.setUsername(verify.getPayLoads().get(<span class="hljs-string">&quot;username&quot;</span>));<br>            userContextDetails.setExtendMap(verify.getPayLoads());<br>            List&lt;Role&gt; roles = JSONObject.parseArray(verify.getPayLoads().get(<span class="hljs-string">&quot;roles&quot;</span>), Role.class);<br>            userContextDetails.setPermissionDetails(roles.stream().map(role -&gt; &#123;<br>                <span class="hljs-type">PermissionDetails</span> <span class="hljs-variable">permissionDetails</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">PermissionDetails</span>();<br>                permissionDetails.setName(role.getCode());<br>                <span class="hljs-keyword">return</span> permissionDetails;<br>            &#125;).collect(Collectors.toList()));<br>        &#125;<br><br>        <span class="hljs-keyword">if</span> (userContextDetails == <span class="hljs-literal">null</span>) &#123;<br>            filterChain.doFilter(request, response);<br>            <span class="hljs-keyword">return</span>;<br>        &#125;<br>        <span class="hljs-type">UserDetails</span> <span class="hljs-variable">userDetails</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">MyUserDetails</span>(userContextDetails);<br>        <span class="hljs-type">UsernamePasswordAuthenticationToken</span> <span class="hljs-variable">authenticationToken</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">UsernamePasswordAuthenticationToken</span>(userDetails, <span class="hljs-literal">null</span>, userDetails.getAuthorities());<br>        SecurityContextHolder.getContext().setAuthentication(authenticationToken);<br>        filterChain.doFilter(request, response);<br>    &#125;<br><br>    <span class="hljs-keyword">private</span> Object <span class="hljs-title function_">getUserDetailsFromRedis</span><span class="hljs-params">(String token)</span> &#123;<br>        <span class="hljs-type">RedisUtils</span> <span class="hljs-variable">redisUtils</span> <span class="hljs-operator">=</span> SpringContextUtils.getBeanOfType(RedisUtils.class);<br>        <span class="hljs-keyword">return</span> redisUtils.getKey(<span class="hljs-string">&quot;token:&quot;</span> + token);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<h4 id="2-2-URL层面的授权"><a href="#2-2-URL层面的授权" class="headerlink" title="2.2. URL层面的授权"></a>2.2. URL层面的授权</h4><p>在配置类中，http.authorizeRequests()主要是对url进行控制，配置顺序会影响之后授权的效果，越是具体的应该放前面，越是笼统的应该放后面。<br>anyRequest(): 表示匹配所有的请求，一般情况下此方法都会使用，设置全部内容都需要进行认证，会放到最后。<br>antMatchers：参数是不定向参数，每个参数是一个ant表达式，用于匹配URL规则。</p>
+<figure class="highlight asciidoc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs asciidoc">ANT 通配符说明<br>? 匹配任何单字符<br><span class="hljs-bullet">* </span>匹配0或者任意数量的字符<br><span class="hljs-bullet">** </span>匹配0或者更多的目录<br></code></pre></td></tr></table></figure>
+<p>假设我们对&#x2F;security&#x2F;permitAll可以免认证，配置为：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs java">http.authorizeRequests<br>.antMatchers(<span class="hljs-string">&quot;/security/permitAll&quot;</span>).permitAll()<br></code></pre></td></tr></table></figure>
+<p>在上述配置中，我们在antMatchers(“&#x2F;security&#x2F;permitAll”)后调用了permitAll()表示不需要认证，随意访问，在SpringSecurity中提供了多种内置控制。</p>
+<h5 id="2-2-1-直接授权"><a href="#2-2-1-直接授权" class="headerlink" title="2.2.1. 直接授权"></a>2.2.1. 直接授权</h5><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>permitAll()</td>
+<td>所匹配的 URL ,任何人都允许访问</td>
+</tr>
+<tr>
+<td>denyAll()</td>
+<td>所匹配的 URL, 任何人都不允许被访问</td>
+</tr>
+<tr>
+<td>authenticated()</td>
+<td>所匹配的 URL ,任何人 都需要被认证才能访问</td>
+</tr>
+<tr>
+<td>anonymous()</td>
+<td>表示可以匿名访问匹配的 URL。和 permitAll()效果类似，只是设置为 anonymous()的 url 会执行 filter 链中</td>
+</tr>
+<tr>
+<td>rememberMe()</td>
+<td>被“remember me”的用户允许访问</td>
+</tr>
+<tr>
+<td>fullyAuthenticated()</td>
+<td>如果用户不是被 remember me ,才可以访问。</td>
+</tr>
+</tbody></table>
+<p>anonymouse和permitAll的区别：前者表示匿名访问，仅允许匿名用户访问，如果登录认证后，带有token信息再去请求，这个anonymouse关联的资源就不能访问；permitAll登录能访问，不登陆也能返回，一般用于静态资源js等。<br>假设我们的SpringSecurity配置如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">package</span> com.yang.infrastructure.security.config;<br><br><span class="hljs-keyword">import</span> com.yang.infrastructure.security.filter.JwtTokenVerifyFilter;<br><span class="hljs-keyword">import</span> com.yang.infrastructure.security.handler.JwtAccessDeniedExceptionHandler;<br><span class="hljs-keyword">import</span> com.yang.infrastructure.security.handler.JwtAuthenticationExceptionHandler;<br><span class="hljs-keyword">import</span> org.springframework.context.annotation.Bean;<br><span class="hljs-keyword">import</span> org.springframework.context.annotation.Configuration;<br><span class="hljs-keyword">import</span> org.springframework.security.config.annotation.web.builders.HttpSecurity;<br><span class="hljs-keyword">import</span> org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;<br><span class="hljs-keyword">import</span> org.springframework.security.config.http.SessionCreationPolicy;<br><span class="hljs-keyword">import</span> org.springframework.security.web.SecurityFilterChain;<br><span class="hljs-keyword">import</span> org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;<br><br><br><span class="hljs-meta">@Configuration</span><br><span class="hljs-meta">@EnableWebSecurity</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">SecurityConfig</span> &#123;<br><br>    <span class="hljs-meta">@Bean</span><br>    SecurityFilterChain <span class="hljs-title function_">filterChain</span><span class="hljs-params">(HttpSecurity httpSecurity)</span> <span class="hljs-keyword">throws</span> Exception &#123;<br>        httpSecurity.headers().cacheControl(); <span class="hljs-comment">// 禁用缓存</span><br>        <span class="hljs-comment">// 登录和注册接口，放行</span><br>        <span class="hljs-keyword">return</span> httpSecurity.authorizeRequests()<br>                .antMatchers(<span class="hljs-string">&quot;/user/login&quot;</span>).permitAll()<br>                .antMatchers(<span class="hljs-string">&quot;/user/register&quot;</span>).permitAll()<br>                .antMatchers(<span class="hljs-string">&quot;/security/permitAll&quot;</span>).permitAll()<br>                .antMatchers(<span class="hljs-string">&quot;/security/anonymous&quot;</span>).anonymous()<br>                .anyRequest().authenticated()<br>                .and()<br>                .csrf().disable()<br>                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS) <span class="hljs-comment">// 设置无状态连接，即不创建session</span><br>                .and()<br>                .cors().disable() <span class="hljs-comment">// 解决跨域问题</span><br>                .exceptionHandling()<br>                .authenticationEntryPoint(<span class="hljs-keyword">new</span> <span class="hljs-title class_">JwtAuthenticationExceptionHandler</span>()) <span class="hljs-comment">// 未认证异常处理</span><br>                .accessDeniedHandler(<span class="hljs-keyword">new</span> <span class="hljs-title class_">JwtAccessDeniedExceptionHandler</span>()) <span class="hljs-comment">// 权限不足异常处理</span><br>                .and()<br>                .addFilterBefore(<span class="hljs-keyword">new</span> <span class="hljs-title class_">JwtTokenVerifyFilter</span>(), UsernamePasswordAuthenticationFilter.class) <span class="hljs-comment">// 添加自定义过滤器</span><br>                .build();<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>这里对登录、注册、permitAll接口放行，对anonymouse接口允许匿名访问。然后我们添加对应的controller</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">package</span> com.yang.controller;<br><br><span class="hljs-keyword">import</span> com.yang.infrastructure.common.Response;<br><span class="hljs-keyword">import</span> org.springframework.security.core.context.SecurityContextHolder;<br><span class="hljs-keyword">import</span> org.springframework.security.core.userdetails.UserDetails;<br><span class="hljs-keyword">import</span> org.springframework.web.bind.annotation.GetMapping;<br><span class="hljs-keyword">import</span> org.springframework.web.bind.annotation.RequestMapping;<br><span class="hljs-keyword">import</span> org.springframework.web.bind.annotation.RestController;<br><br><br><span class="hljs-meta">@RestController</span><br><span class="hljs-meta">@RequestMapping(value = &quot;/security&quot;)</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">SecurityController</span> &#123;<br><br>    <span class="hljs-meta">@GetMapping(value = &quot;/hello&quot;)</span><br>    <span class="hljs-keyword">public</span> Response <span class="hljs-title function_">hello</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-type">UserDetails</span>  <span class="hljs-variable">userDetails</span> <span class="hljs-operator">=</span> (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();<br>        System.out.println(userDetails);<br>        <span class="hljs-keyword">return</span> Response.success(<span class="hljs-string">&quot;hello&quot;</span>);<br>    &#125;<br><br>    <span class="hljs-meta">@GetMapping(value = &quot;/anonymous&quot;)</span><br>    <span class="hljs-keyword">public</span> Response <span class="hljs-title function_">anonymous</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-keyword">return</span> Response.success(<span class="hljs-string">&quot;anonymous&quot;</span>);<br>    &#125;<br><br>    <span class="hljs-meta">@GetMapping(value = &quot;/permitAll&quot;)</span><br>    <span class="hljs-keyword">public</span> Response <span class="hljs-title function_">permitAll</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-keyword">return</span> Response.success(<span class="hljs-string">&quot;permitAll&quot;</span>);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>运行项目，进行测试，在未登录的情况下，访问anonymous和permitAll接口：</p>
+<img src="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/2.png" srcset="/img/loading.gif" lazyload class="">
+<img src="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/3.png" srcset="/img/loading.gif" lazyload class="">
+<p>在登录情况下访问anonymous和permitAll</p>
+<img src="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/4.png" srcset="/img/loading.gif" lazyload class="">
+<img src="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/5.png" srcset="/img/loading.gif" lazyload class="">
+<h5 id="2-2-2-权限授权"><a href="#2-2-2-权限授权" class="headerlink" title="2.2.2. 权限授权"></a>2.2.2. 权限授权</h5><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>hasAuthority(String authorities)</td>
+<td>拥有指定权限的用户可以访问</td>
+</tr>
+<tr>
+<td>hasAnyAuthority(String… authorities)</td>
+<td>拥有指定任一权限的用户可访问</td>
+</tr>
+</tbody></table>
+<p>我们修改SpringSecurity的配置，添加下面的权限信息：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs java">.antMatchers(<span class="hljs-string">&quot;/security/student&quot;</span>)<br>.hasAuthority(<span class="hljs-string">&quot;STUDENT&quot;</span>)<br>.antMatchers(<span class="hljs-string">&quot;/security/studentOrCounselor&quot;</span>)<br>.hasAnyAuthority(<span class="hljs-string">&quot;STUDENT&quot;</span>, <span class="hljs-string">&quot;COUNSELOR&quot;</span>)<br></code></pre></td></tr></table></figure>
+<p>然后添加相应的测试接口</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@GetMapping(value = &quot;/student&quot;)</span><br><span class="hljs-keyword">public</span> Response <span class="hljs-title function_">student</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-keyword">return</span> Response.success(<span class="hljs-string">&quot;学生可以访问&quot;</span>);<br>&#125;<br><br><span class="hljs-meta">@GetMapping(value = &quot;/studentOrCounselor&quot;)</span><br><span class="hljs-keyword">public</span> Response <span class="hljs-title function_">studentOrCounselor</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-keyword">return</span> Response.success(<span class="hljs-string">&quot;学生或辅导员可以访问&quot;</span>);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>接着，使用学生账号访问上面两个接口：</p>
+<img src="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/6.png" srcset="/img/loading.gif" lazyload class="">
+<img src="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/7.png" srcset="/img/loading.gif" lazyload class="">
+<p>使用辅导员账号访问上面两个接口</p>
+<img src="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/8.png" srcset="/img/loading.gif" lazyload class="">
+<img src="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/9.png" srcset="/img/loading.gif" lazyload class="">
+<h5 id="2-2-3-角色授权"><a href="#2-2-3-角色授权" class="headerlink" title="2.2.3. 角色授权"></a>2.2.3. 角色授权</h5><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>hasRole(String role)</td>
+<td>拥有指定角色的用户可以访问,角色将被增加ROLE_前缀</td>
+</tr>
+<tr>
+<td>hasAnyRoles(String… roles)</td>
+<td>拥有指定任一角色的用户可访问</td>
+</tr>
+</tbody></table>
+<p>这个功能和基于权限认证感觉差不多，只是我们在设置Authority的时候，要加上ROLE_前缀，不然匹配不上，这里就不做演示了。</p>
+<h4 id="2-3-基于注解进行权限校验"><a href="#2-3-基于注解进行权限校验" class="headerlink" title="2.3. 基于注解进行权限校验"></a>2.3. 基于注解进行权限校验</h4><p>在SpringSecurity中，可以通过使用注解的方式进行权限校验，以下是一些常用的SpringSecurity注解：<br>1）@PreAuthorize和@ PostAuthorize: 用于方法安全性，可以定义方法执行前或执行后的权限校验。前者用于方法执行前，可以根据表达式判断是否有权限执行该方法，后者用于方法执行后，可以检测方法执行的结果是否有权限。<br>2）@Secured：该注解用于方法或类上，要求用户具有所有的指定角色。<br>3）@PermitAll：用于方法或类上，表示该方法对所有用户开放，无需权限即可访问。<br>4）@DenyAll：用于方法或类上，表示该方法对所有用户都不可访问。<br>5）@Authenticated：用于方法上，表示用户需要被认证（即已经通过身份验证）。<br>上述这些注解，SpringSecurity会利用表达式进行动态权限校验，其中可以使用hasRole、hasAuthority、hasAnyRole、hasAnyAuthority等方法来判断用户角色或权限。<br>在方法的权限控制上，SpringSecurity支持三种类型的注解，JSR-250注解，@Secured注解和表达式的注解，这三种注解默认都没有启动，需要通过@EnableGlobalMethodSecurity来启用，这些注解都可以卸载Service接口或方法上，也可以写到Controller或Controller的方法上。</p>
+<h5 id="2-3-1-表达式的注解"><a href="#2-3-1-表达式的注解" class="headerlink" title="2.3.1. 表达式的注解"></a>2.3.1. 表达式的注解</h5><p>我们以PreAuthorize注解为例，首先，要在配置类中开启注解，在配置类上，加上下面这行代码</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@EnableGlobalMethodSecurity(prePostEnabled = true)</span><br></code></pre></td></tr></table></figure>
+<p>然后，我们添加两个接口，用于测试PreAuthorize注解</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@PreAuthorize(value = &quot;hasAuthority(&#x27;STUDENT&#x27;)&quot;)</span><br>  <span class="hljs-meta">@GetMapping(value = &quot;/permitStudent&quot;)</span><br>  <span class="hljs-keyword">public</span> Response <span class="hljs-title function_">permitStudent</span><span class="hljs-params">()</span> &#123;<br>      <span class="hljs-keyword">return</span> Response.success(<span class="hljs-string">&quot;学生才有权限&quot;</span>);<br>  &#125;<br><br>  <span class="hljs-meta">@PreAuthorize(value = &quot;hasAnyAuthority(&#x27;STUDENT&#x27;, &#x27;COUNSELOR&#x27;)&quot;)</span><br>  <span class="hljs-meta">@GetMapping(value = &quot;/permitStudentAndCounselor&quot;)</span><br>  <span class="hljs-keyword">public</span> Response <span class="hljs-title function_">permitStudentAndCounselor</span><span class="hljs-params">()</span> &#123;<br>      <span class="hljs-keyword">return</span> Response.success(<span class="hljs-string">&quot;学生和辅导员才有权限&quot;</span>);<br>  &#125;<br></code></pre></td></tr></table></figure>
+<p>使用学生账号，访问上面两个接口：</p>
+<img src="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/10.png" srcset="/img/loading.gif" lazyload class="">
+<img src="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/11.png" srcset="/img/loading.gif" lazyload class="">
+<p>使用辅导员账号访问上面两个接口：</p>
+<img src="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/12.png" srcset="/img/loading.gif" lazyload class="">
+<img src="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/13.png" srcset="/img/loading.gif" lazyload class="">
+<h5 id="2-3-2-JSR-250注解"><a href="#2-3-2-JSR-250注解" class="headerlink" title="2.3.2. JSR-250注解"></a>2.3.2. JSR-250注解</h5><p>首先，修改SpringSecurity配置类，在刚才的基础上，开启jsr-250注解</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@EnableGlobalMethodSecurity(prePostEnabled = true, jsr250Enabled = true)</span><br></code></pre></td></tr></table></figure>
+<p>然后添加一个接口，用于测试</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@PermitAll</span><br> <span class="hljs-meta">@GetMapping(value = &quot;/jsr250PermitAll&quot;)</span><br> <span class="hljs-keyword">public</span> Response <span class="hljs-title function_">jsr250PermitAll</span><span class="hljs-params">()</span> &#123;<br>     <span class="hljs-keyword">return</span> Response.success(<span class="hljs-string">&quot;jsr250PermitAll&quot;</span>);<br> &#125;<br></code></pre></td></tr></table></figure>
+<p>首先，分别使用不同权限的用户登录token，访问该接口，结果如下：</p>
+<img src="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/14.png" srcset="/img/loading.gif" lazyload class="">
+<p>然后，不携带token访问该接口（未登录状态下访问接口）：</p>
+<img src="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/15.png" srcset="/img/loading.gif" lazyload class="">
+<p>这里会被拦截，原因是会先经过FilterSecurityInterceptor过滤器，利用匿名的认证用户进行投票决策，此时vote返回-1（因为没有匹配到当前url，只能匹配authenticated)，默认AffirmativeBased决策下就会直接抛出AccessDeniedException，因此就不会今日到MethodSecurityInterceptor的判断逻辑，必须认证之后才行。debug过程如下：<br>首先会浸入FilterSecurityInterceptor过滤器：</p>
+<img src="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/16.png" srcset="/img/loading.gif" lazyload class="">
+<img src="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/17.png" srcset="/img/loading.gif" lazyload class="">
+<p>此时使用的是匿名的认证用户，进行投票决策</p>
+<img src="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/18.png" srcset="/img/loading.gif" lazyload class="">
+<img src="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/19.png" srcset="/img/loading.gif" lazyload class="">
+<p>因为没有匹配到当前url，智能匹配authenticated，因此vote返回-1</p>
+<img src="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/20.png" srcset="/img/loading.gif" lazyload class="">
+<img src="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/21.png" srcset="/img/loading.gif" lazyload class="">
+<p>最后，抛出AccessDeniedException异常</p>
+<img src="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/22.png" srcset="/img/loading.gif" lazyload class="">
+<h5 id="2-3-3-Secured注解"><a href="#2-3-3-Secured注解" class="headerlink" title="2.3.3. Secured注解"></a>2.3.3. Secured注解</h5><p>首先，修改SpringSecurity的配置类，开启Secured注解的支持。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@EnableGlobalMethodSecurity(prePostEnabled = true, jsr250Enabled = true, securedEnabled = true)</span><br></code></pre></td></tr></table></figure>
+<p>Secured是专门用来判断是否具有角色的，参数要以ROLE开头，不过我们之前设置的权限，如STUDENT、COUNSELOR都没有以ROLE开头，我们先修改一些MyUserDetails类的richAuthority，加上ROLE前缀。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">private</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">richAuthority</span><span class="hljs-params">()</span> &#123;<br>      List&lt;PermissionDetails&gt; permissionDetails = userContextDetails.getPermissionDetails();<br>      <span class="hljs-keyword">if</span> (CollectionUtils.isEmpty(permissionDetails)) &#123;<br>          <span class="hljs-keyword">return</span>;<br>      &#125;<br>      String[] permissions = permissionDetails.stream().map(permission -&gt; <span class="hljs-string">&quot;ROLE_&quot;</span> + permission.getName())<br>              .collect(Collectors.toList()).toArray(<span class="hljs-keyword">new</span> <span class="hljs-title class_">String</span>[<span class="hljs-number">0</span>]);<br>      <span class="hljs-built_in">this</span>.authorityList = AuthorityUtils.createAuthorityList(permissions);<br>  &#125;<br></code></pre></td></tr></table></figure>
+<p>然后添加测试方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Secured(value = &quot;ROLE_STUDENT&quot;)</span><br>   <span class="hljs-meta">@GetMapping(value = &quot;/securedStudent&quot;)</span><br>   <span class="hljs-keyword">public</span> Response <span class="hljs-title function_">securedStudent</span><span class="hljs-params">()</span> &#123;<br>       <span class="hljs-keyword">return</span> Response.success(<span class="hljs-string">&quot;securedStudent&quot;</span>);<br>   &#125;<br></code></pre></td></tr></table></figure>
+<p>分别用学生账号和辅导员账号访问该接口，结果如下：</p>
+<img src="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/23.png" srcset="/img/loading.gif" lazyload class="">
+<img src="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/24.png" srcset="/img/loading.gif" lazyload class="">
+<h3 id="3-参考文章"><a href="#3-参考文章" class="headerlink" title="3. 参考文章"></a>3. 参考文章</h3><p><a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_46073538/article/details/128641746">https://blog.csdn.net/weixin_46073538/article/details/128641746</a><br><a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_41071876/article/details/122086856">https://blog.csdn.net/qq_41071876/article/details/122086856</a></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/SpringBoot/" class="print-no-link">#SpringBoot</a>
+      
+        <a href="/tags/SpringSecurity/" class="print-no-link">#SpringSecurity</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>SpringSecurity学习2—SpringSecurity授权</div>
+      <div>https://cxydhi.github.io/2024/04/03/SpringSecurity学习2—SpringSecurity授权/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>沉河不浮</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年4月3日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2024/05/04/%E6%89%8B%E6%92%B8Mybatis%EF%BC%88%E4%B8%80%EF%BC%89%E2%80%94%E2%80%94%E4%BB%A3%E7%90%86mapper/" title="手撸Mybatis（一）——代理mapper">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">手撸Mybatis（一）——代理mapper</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A01%E2%80%94SpringSecurity%E8%AE%A4%E8%AF%81/" title="SpringSecurity学习1—SpringSecurity认证">
+                        <span class="hidden-mobile">SpringSecurity学习1—SpringSecurity认证</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

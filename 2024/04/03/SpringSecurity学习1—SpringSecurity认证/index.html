@@ -1,0 +1,699 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="沉河不浮">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="1. 简介Spring Security是一个用于包含应用程序安全性的Java框架，它提供了一套全面的安全解决方案，包括身份验证、授权、防止攻击等功能。它基于过滤器链的概念，可以轻松地集成到任何基于Spring的应用程序中，它支持多种身份验证选项和授权策略，此外，还提供一些附加功能，如集成第三方身份验证提供商和单点登录，以及会话管理和密码编码等。 2. SpringBoot整合SpringSecu">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SpringSecurity学习1—SpringSecurity认证">
+<meta property="og:url" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A01%E2%80%94SpringSecurity%E8%AE%A4%E8%AF%81/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="1. 简介Spring Security是一个用于包含应用程序安全性的Java框架，它提供了一套全面的安全解决方案，包括身份验证、授权、防止攻击等功能。它基于过滤器链的概念，可以轻松地集成到任何基于Spring的应用程序中，它支持多种身份验证选项和授权策略，此外，还提供一些附加功能，如集成第三方身份验证提供商和单点登录，以及会话管理和密码编码等。 2. SpringBoot整合SpringSecu">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A01%E2%80%94SpringSecurity%E8%AE%A4%E8%AF%81/1.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A01%E2%80%94SpringSecurity%E8%AE%A4%E8%AF%81/2.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A01%E2%80%94SpringSecurity%E8%AE%A4%E8%AF%81/3.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A01%E2%80%94SpringSecurity%E8%AE%A4%E8%AF%81/4.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A01%E2%80%94SpringSecurity%E8%AE%A4%E8%AF%81/5.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A01%E2%80%94SpringSecurity%E8%AE%A4%E8%AF%81/6.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A01%E2%80%94SpringSecurity%E8%AE%A4%E8%AF%81/7.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A01%E2%80%94SpringSecurity%E8%AE%A4%E8%AF%81/8.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A01%E2%80%94SpringSecurity%E8%AE%A4%E8%AF%81/9.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A01%E2%80%94SpringSecurity%E8%AE%A4%E8%AF%81/10.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A01%E2%80%94SpringSecurity%E8%AE%A4%E8%AF%81/11.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A01%E2%80%94SpringSecurity%E8%AE%A4%E8%AF%81/12.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A01%E2%80%94SpringSecurity%E8%AE%A4%E8%AF%81/13.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A01%E2%80%94SpringSecurity%E8%AE%A4%E8%AF%81/14.png">
+<meta property="article:published_time" content="2024-04-03T07:28:26.000Z">
+<meta property="article:modified_time" content="2024-04-03T07:36:04.173Z">
+<meta property="article:author" content="沉河不浮">
+<meta property="article:tag" content="SpringBoot">
+<meta property="article:tag" content="SpringSecurity">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://cxydhi.github.io/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A01%E2%80%94SpringSecurity%E8%AE%A4%E8%AF%81/1.png">
+  
+  
+  
+  <title>SpringSecurity学习1—SpringSecurity认证 - Hexo</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"cxydhi.github.io","root":"/","version":"1.9.5","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Fluid</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="SpringSecurity学习1—SpringSecurity认证"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-04-03 15:28" pubdate>
+          2024年4月3日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          17k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          139 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">SpringSecurity学习1—SpringSecurity认证</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h3 id="1-简介"><a href="#1-简介" class="headerlink" title="1. 简介"></a>1. 简介</h3><p>Spring Security是一个用于包含应用程序安全性的Java框架，它提供了一套全面的安全解决方案，包括身份验证、授权、防止攻击等功能。它基于过滤器链的概念，可以轻松地集成到任何基于Spring的应用程序中，它支持多种身份验证选项和授权策略，此外，还提供一些附加功能，如集成第三方身份验证提供商和单点登录，以及会话管理和密码编码等。</p>
+<h3 id="2-SpringBoot整合SpringSecurity"><a href="#2-SpringBoot整合SpringSecurity" class="headerlink" title="2. SpringBoot整合SpringSecurity"></a>2. SpringBoot整合SpringSecurity</h3><h4 id="2-1-引言"><a href="#2-1-引言" class="headerlink" title="2.1. 引言"></a>2.1. 引言</h4><p>代码实现，基于前两章提到的登录、注册和鉴权项目，这里将使用SpringSecurity框架，逐步替代前两章自定义的认证授权实现。首先，注释掉WebMvcConfiguration类，去除该类对我们后续使用SpringSecurity的影响。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">//package com.yang.infrastructure.configuration;</span><br><span class="hljs-comment">//</span><br><span class="hljs-comment">//import com.yang.infrastructure.auth.interceptors.JwtTokenVerifyInterceptor;</span><br><span class="hljs-comment">//import com.yang.infrastructure.auth.interceptors.PermissionVerifyInterceptor;</span><br><span class="hljs-comment">//import org.springframework.context.annotation.Configuration;</span><br><span class="hljs-comment">//import org.springframework.web.servlet.config.annotation.InterceptorRegistry;</span><br><span class="hljs-comment">//import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;</span><br><span class="hljs-comment">//</span><br><span class="hljs-comment">//@Configuration</span><br><span class="hljs-comment">//public class WebMvcConfiguration implements WebMvcConfigurer &#123;</span><br><span class="hljs-comment">//</span><br><span class="hljs-comment">//    @Override</span><br><span class="hljs-comment">//    public void addInterceptors(InterceptorRegistry registry) &#123;</span><br><span class="hljs-comment">//        registry.addInterceptor(new JwtTokenVerifyInterceptor())</span><br><span class="hljs-comment">//                .addPathPatterns(&quot;/**&quot;) // 拦截所有请求</span><br><span class="hljs-comment">//                .excludePathPatterns(&quot;/user/login&quot;, &quot;/user/register&quot;); // 排除登录、注册接口</span><br><span class="hljs-comment">//</span><br><span class="hljs-comment">//        PermissionVerifyInterceptor permissionVerifyInterceptor = new PermissionVerifyInterceptor();</span><br><span class="hljs-comment">//        permissionVerifyInterceptor.addPermission(&quot;STUDENT&quot;, &quot;/student/needPermission&quot;);</span><br><span class="hljs-comment">//        permissionVerifyInterceptor.addPermission(&quot;COUNSELOR&quot;, &quot;/counselor/*&quot;);</span><br><span class="hljs-comment">//</span><br><span class="hljs-comment">//        registry.addInterceptor(permissionVerifyInterceptor)</span><br><span class="hljs-comment">//                .addPathPatterns(&quot;/**&quot;) // 拦截所有请求</span><br><span class="hljs-comment">//                .excludePathPatterns(&quot;/user/login&quot;, &quot;/user/register&quot;); // 排除登录、注册接口</span><br><span class="hljs-comment">//    &#125;</span><br><span class="hljs-comment">//&#125;</span><br></code></pre></td></tr></table></figure>
+<h4 id="2-2-SpringSecurity完整流程"><a href="#2-2-SpringSecurity完整流程" class="headerlink" title="2.2. SpringSecurity完整流程"></a>2.2. SpringSecurity完整流程</h4><p>SpringSecurity功能的实现主要是一系列过滤器链相互配合完成的</p>
+<img src="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A01%E2%80%94SpringSecurity%E8%AE%A4%E8%AF%81/1.png" srcset="/img/loading.gif" lazyload class="">
+<p>SecurityContextPersistenceFilter：整个拦截过程的入口和出口（也就是第一个和最后一个拦截器），会在请求开始时从配置后的SecurityContextRepository中获取SecurityContext，然后把它设置给SecurityContextHolder，请求完成后将SecurityContextHolder持有的SecurityContext再保存到配置后的SecurityContextRepository，同时清除SecurityContextHolder所持有的SecurityContext；<br>UsernamePasswordAuthenticationFilter：用于处理来自表单提交的认证，该表单必须提供对应的用户名和密码，其内部还有登录成功或失败后进行处理的AuthenticationSuccessHandler和AuthenticationFailureHandler，这些都可以根据需求做相关改变；<br>Filter Security Interceptor：用于保护web资源，使用AccessDecisionManager对当前用户进行授权访问；<br>ExceptionTranslationFilter：捕获来着FilterChain所有的异常，并进行处理，但它只会处理两类异常：AuthenticationException和AccessDeniedException，其他异常会继续抛出。</p>
+<h4 id="2-3-认证流程"><a href="#2-3-认证流程" class="headerlink" title="2.3. 认证流程"></a>2.3. 认证流程</h4><img src="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A01%E2%80%94SpringSecurity%E8%AE%A4%E8%AF%81/2.png" srcset="/img/loading.gif" lazyload class="">
+<p>AuthenticationManager：定义认证Authentication的方法<br>UserDetailsService：加载用户特定数据的核心接口，里面定义了一个根据用户名查询用户信息的方法<br>UserDetails接口：提供核心用户信息，通过UserDetailsService根据用户名获取处理的用户信息，要封装成UserDetails对象返回，然后将这些信息封装到Authentication对象中。<br>入门案例<br>引入依赖<br>首先，我们引入SpringSecurity的依赖</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs java">&lt;dependency&gt;<br>           &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;<br>           &lt;artifactId&gt;spring-boot-starter-security&lt;/artifactId&gt;<br>       &lt;/dependency&gt;<br></code></pre></td></tr></table></figure>
+<p>然后定义一个测试接口，用于测试SpringSecurity：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">package</span> com.yang.controller;<br><br><span class="hljs-keyword">import</span> com.yang.infrastructure.common.Response;<br><span class="hljs-keyword">import</span> org.springframework.web.bind.annotation.GetMapping;<br><span class="hljs-keyword">import</span> org.springframework.web.bind.annotation.RequestMapping;<br><span class="hljs-keyword">import</span> org.springframework.web.bind.annotation.RestController;<br><br><span class="hljs-meta">@RestController</span><br><span class="hljs-meta">@RequestMapping(value = &quot;/security&quot;)</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">SecurityController</span> &#123;<br><br>    <span class="hljs-meta">@GetMapping(value = &quot;/hello&quot;)</span><br>    <span class="hljs-keyword">public</span> Response <span class="hljs-title function_">hello</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-keyword">return</span> Response.success(<span class="hljs-string">&quot;hello&quot;</span>);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>启动项目，访问&#x2F;security&#x2F;hello接口，此时会跳转到登录界面</p>
+<img src="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A01%E2%80%94SpringSecurity%E8%AE%A4%E8%AF%81/3.png" srcset="/img/loading.gif" lazyload class="">
+<p>在控制台中，我们可以看到如下内容</p>
+<img src="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A01%E2%80%94SpringSecurity%E8%AE%A4%E8%AF%81/4.png" srcset="/img/loading.gif" lazyload class="">
+<p>我们使用user用户名，以及控制台中的密码，在表单提交登录,此时便会跳转到登录成功页面。</p>
+<img src="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A01%E2%80%94SpringSecurity%E8%AE%A4%E8%AF%81/5.png" srcset="/img/loading.gif" lazyload class="">
+<h4 id="2-4-2-UserDetailsService"><a href="#2-4-2-UserDetailsService" class="headerlink" title="2.4.2. UserDetailsService"></a>2.4.2. UserDetailsService</h4><p>在每次启动项目的时候，我们查看控制台时，总是能看到下面生成了一串UUID字符串</p>
+<img src="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A01%E2%80%94SpringSecurity%E8%AE%A4%E8%AF%81/6.png" srcset="/img/loading.gif" lazyload class="">
+<p>这是因为在默认情况下，SpringSecurity自动化地帮我们完成以下三件事情：<br>1）开启FormLogin登录认证模式：假设我们还没有登录，然后访问&#x2F;security&#x2F;hello测试接口，那么请求会被重定向到页面&#x2F;login，提示使用用户名和密码登录。<br>2）生成用于登录的用户名和密码：用户名是user，密码就是上面启动日志中随机生成的字符串<br>3）注册用于认证和鉴权的过滤器：SpringSecurity本质就是通过过滤器或过滤器（链）实现的，每一个接口请求都会按顺序经过这些过滤器的“过滤”，每个过滤器承担各自的职责，组合起来共同完成认证和鉴权，根据配置的不同，注册的过滤器有所不同。<br>使用默认用户名和随机密码的方式不够灵活，因此，我们可以实现SpringSecurity提供的UserDetailsService接口。这里先介绍SpringSecurity预置的两种常见的存储介质实现：<br>1）InMemoryUserDetailsManager：基于内存的实现<br>2）JdbcUserDetailsManager：基于数据库的实现<br>我们介绍以下InMemoryUserDetailsManager，我们创建用户实例和InMemoryUserDetailsManager实例，并使用@Bean将InMemoryUserDetailsManager实例注入到SpringSecurity中</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Configuration</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">SecurityConfig</span> &#123;<br><br>    <span class="hljs-meta">@Bean</span><br>    <span class="hljs-keyword">public</span> UserDetailsManager <span class="hljs-title function_">users</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-type">UserDetails</span> <span class="hljs-variable">user</span> <span class="hljs-operator">=</span> User.builder()<br>                .username(<span class="hljs-string">&quot;cxy&quot;</span>)<br>                .password(<span class="hljs-string">&quot;&#123;bcrypt&#125;$2a$10$CrPsv1X3hM&quot;</span> +<br>                        <span class="hljs-string">&quot;.giwVZyNsrKuaRvpJZyGQycJg78xT7Dm68K4DWN/lxS&quot;</span>) <span class="hljs-comment">// 使用Bcrypt算法加密</span><br>                .roles(<span class="hljs-string">&quot;USER&quot;</span>)<br>                .build();<br><br>        <span class="hljs-type">InMemoryUserDetailsManager</span> <span class="hljs-variable">manager</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">InMemoryUserDetailsManager</span>();<br>        manager.createUser(user);<br>        <span class="hljs-keyword">return</span> manager;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>重新启动项目，访问测试接口&#x2F;security&#x2F;hello，用户名输入cxy，密码输入123456</p>
+<img src="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A01%E2%80%94SpringSecurity%E8%AE%A4%E8%AF%81/7.png" srcset="/img/loading.gif" lazyload class="">
+<img src="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A01%E2%80%94SpringSecurity%E8%AE%A4%E8%AF%81/8.png" srcset="/img/loading.gif" lazyload class="">
+<p>JdbcUserDetailsManager的实现与InMemoryUserDetailsManager类似，这里就不赘述了。<br>除了上面这两种内置实现，我们还可以自定义UserDetailsService的实现。但这里不进行介绍，因为UserDetailsService是基于表单认证这种模式的，而有时候，我们的登录方式、登录页面与它提供的又不一样，因此，我们下面会讲到，如何接入我们自定义的登录接口，登录方式。</p>
+<h4 id="2-4-3-登录和注册放行"><a href="#2-4-3-登录和注册放行" class="headerlink" title="2.4.3. 登录和注册放行"></a>2.4.3. 登录和注册放行</h4><p>上面这种整合方式，会对所有的请求进行拦截，但是一般情况下，我们是不拦截用户登录和用户注册接口的，而且现在的项目一般是前后端分离，没必要跳转到专门的登录页面。<br>这里使用的springboot版本是2.7.0，在Spring Boot 2.7.0之前的版本中，我们需要写个配置类继承WebSecurityConfigurerAdapter，然后重写Adapter中的三个方法进行配置，如下所示：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Configuration</span><br><span class="hljs-meta">@EnableWebSecurity</span><br><span class="hljs-meta">@EnableGlobalMethodSecurity(prePostEnabled = true)</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">OldSecurityConfig</span> <span class="hljs-keyword">extends</span> <span class="hljs-title class_">WebSecurityConfigurerAdapter</span> &#123;<br>    <span class="hljs-meta">@Autowired</span><br>    <span class="hljs-keyword">private</span> UmsAdminService adminService;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">protected</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">configure</span><span class="hljs-params">(HttpSecurity httpSecurity)</span> <span class="hljs-keyword">throws</span> Exception &#123;<br>        <span class="hljs-comment">//省略HttpSecurity的配置</span><br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">protected</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">configure</span><span class="hljs-params">(AuthenticationManagerBuilder auth)</span> <span class="hljs-keyword">throws</span> Exception &#123;<br>        auth.userDetailsService(userDetailsService())<br>                .passwordEncoder(passwordEncoder());<br>    &#125;<br>    <br>    <span class="hljs-meta">@Bean</span><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> AuthenticationManager <span class="hljs-title function_">authenticationManagerBean</span><span class="hljs-params">()</span> <span class="hljs-keyword">throws</span> Exception &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-built_in">super</span>.authenticationManagerBean();<br>    &#125;<br><br>&#125;<br></code></pre></td></tr></table></figure>
+<p>但这种方式在SpringBoot 2.7.0中，WebSecurityConfigurerAdapter已经被弃用了，新用法中，无需继承WebSecurityConfigurerAdapter，只需要直接声明一个配置类，再配置一个生成SecurityFilterChainBean方法，配置信息如下，我们对&#x2F;user&#x2F;login和&#x2F;user&#x2F;register接口，进行放行，而其他接口，都需要进行验证。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">package</span> com.yang.infrastructure.auth.config;<br><br><span class="hljs-keyword">import</span> org.springframework.context.annotation.Bean;<br><span class="hljs-keyword">import</span> org.springframework.context.annotation.Configuration;<br><span class="hljs-keyword">import</span> org.springframework.security.config.annotation.web.builders.HttpSecurity;<br><span class="hljs-keyword">import</span> org.springframework.security.config.http.SessionCreationPolicy;<br><span class="hljs-keyword">import</span> org.springframework.security.web.SecurityFilterChain;<br><br><span class="hljs-meta">@Configuration</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">SecurityConfig</span> &#123;<br>    <span class="hljs-meta">@Bean</span><br>    SecurityFilterChain <span class="hljs-title function_">filterChain</span><span class="hljs-params">(HttpSecurity httpSecurity)</span> <span class="hljs-keyword">throws</span> Exception &#123;<br>        <span class="hljs-comment">// 登录和注册接口，放行</span><br>        <span class="hljs-keyword">return</span> httpSecurity.authorizeRequests()<br>                .antMatchers(<span class="hljs-string">&quot;/user/login&quot;</span>).permitAll()<br>                .antMatchers(<span class="hljs-string">&quot;/user/register&quot;</span>).permitAll()<br>                .anyRequest().authenticated()<br>                .and()<br>                .csrf().disable()<br>                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS) <span class="hljs-comment">// 设置无状态连接，即不创建session</span><br>                .and()<br>                .cors().disable() <span class="hljs-comment">// 解决跨域问题</span><br>                .build();<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>http.authorizeHttpRequests(): 指定哪些请求需要什么样的认证或授权，这里使用anyRequest()和authenticated()表示所有请求均需要认证。<br>http.authorizeHttpRequests()：表示我们使用HttpBasic认证。<br>在上面的配置中，我们配置了登录接口和注册接口允许放行，其他接口进行拦截，然后我们访问登录接口，可以看出登录接口放行通过，能顺利访问。</p>
+<img src="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A01%E2%80%94SpringSecurity%E8%AE%A4%E8%AF%81/9.png" srcset="/img/loading.gif" lazyload class="">
+<p>再访问&#x2F;security&#x2F;hello接口，结果是403，说明无权访问。</p>
+<img src="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A01%E2%80%94SpringSecurity%E8%AE%A4%E8%AF%81/10.png" srcset="/img/loading.gif" lazyload class="">
+<h5 id="2-4-4-异常处理"><a href="#2-4-4-异常处理" class="headerlink" title="2.4.4. 异常处理"></a>2.4.4. 异常处理</h5><p>在最开始的时候，我们没有配置任何东西时，没有权限便会默认跳转到用户登录界面，现在因为我们没有配置登录表单路径，所以会直接提示403，我们可以在配置类中，配置异常处理方式，方便返回一些格式化的数据供前端做出决策。<br>我们创建一个JwtAuthenticationExceptionHandler，该类实现自AuthenticationEntryPoint接口</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">JwtAuthenticationExceptionHandler</span> <span class="hljs-keyword">implements</span> <span class="hljs-title class_">AuthenticationEntryPoint</span> &#123;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">commence</span><span class="hljs-params">(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException)</span> <span class="hljs-keyword">throws</span> IOException, ServletException &#123;<br>        sendErrorResponse(response);<br>    &#125;<br><br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">sendErrorResponse</span><span class="hljs-params">(HttpServletResponse response)</span> <span class="hljs-keyword">throws</span> IOException &#123;<br>        Response&lt;Object&gt; errorResponse = Response.fail(ResultCode.AUTHENTICATION_FAIL);<br>        response.setCharacterEncoding(<span class="hljs-string">&quot;UTF-8&quot;</span>);<br>        response.setStatus(HttpStatus.UNAUTHORIZED.value());<br>        <span class="hljs-type">PrintWriter</span> <span class="hljs-variable">writer</span> <span class="hljs-operator">=</span> response.getWriter();<br>        writer.write(JSONObject.toJSONString(errorResponse));<br>        writer.flush();<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>然后我们修改SpringSecurity的配置类，添加上和异常处理相关的配置：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Configuration</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">SecurityConfig</span> &#123;<br>    <span class="hljs-meta">@Bean</span><br>    SecurityFilterChain <span class="hljs-title function_">filterChain</span><span class="hljs-params">(HttpSecurity httpSecurity)</span> <span class="hljs-keyword">throws</span> Exception &#123;<br>        <span class="hljs-comment">// 登录和注册接口，放行</span><br>        <span class="hljs-keyword">return</span> httpSecurity.authorizeRequests()<br>                .antMatchers(<span class="hljs-string">&quot;/user/login&quot;</span>).permitAll()<br>                .antMatchers(<span class="hljs-string">&quot;/user/register&quot;</span>).permitAll()<br>                .anyRequest().authenticated()<br>                .and()<br>                .csrf().disable()<br>                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS) <span class="hljs-comment">// 设置无状态连接，即不创建session</span><br>                .and()<br>                .cors().disable() <span class="hljs-comment">// 解决跨域问题</span><br>                .exceptionHandling()<br>                .authenticationEntryPoint(<span class="hljs-keyword">new</span> <span class="hljs-title class_">JwtAuthenticationExceptionHandler</span>()) <span class="hljs-comment">// 未认证异常处理</span><br>                .and()<br>                .build();<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>接着再次访问&#x2F;security&#x2F;hello接口，结果如下：</p>
+<img src="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A01%E2%80%94SpringSecurity%E8%AE%A4%E8%AF%81/11.png" srcset="/img/loading.gif" lazyload class="">
+<p>同理，在权限不足的情况下，我们也可以实现相关的异常处理类</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">JwtAccessDeniedExceptionHandler</span> <span class="hljs-keyword">implements</span> <span class="hljs-title class_">AccessDeniedHandler</span> &#123;<br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">handle</span><span class="hljs-params">(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException)</span> <span class="hljs-keyword">throws</span> IOException, ServletException &#123;<br>        sendErrorResponse(response);<br>    &#125;<br><br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">sendErrorResponse</span><span class="hljs-params">(HttpServletResponse response)</span> <span class="hljs-keyword">throws</span> IOException &#123;<br>        Response&lt;Object&gt; errorResponse = Response.fail(ResultCode.ACCESS_DENIED);<br>        response.setCharacterEncoding(<span class="hljs-string">&quot;UTF-8&quot;</span>);<br>        response.setStatus(HttpStatus.UNAUTHORIZED.value());<br>        <span class="hljs-type">PrintWriter</span> <span class="hljs-variable">writer</span> <span class="hljs-operator">=</span> response.getWriter();<br>        writer.write(JSONObject.toJSONString(errorResponse));<br>        writer.flush();<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>修改配置类：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Configuration</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">SecurityConfig</span> &#123;<br>    <span class="hljs-meta">@Bean</span><br>    SecurityFilterChain <span class="hljs-title function_">filterChain</span><span class="hljs-params">(HttpSecurity httpSecurity)</span> <span class="hljs-keyword">throws</span> Exception &#123;<br>        <span class="hljs-comment">// 登录和注册接口，放行</span><br>        <span class="hljs-keyword">return</span> httpSecurity.authorizeRequests()<br>                .antMatchers(<span class="hljs-string">&quot;/user/login&quot;</span>).permitAll()<br>                .antMatchers(<span class="hljs-string">&quot;/user/register&quot;</span>).permitAll()<br>                .anyRequest().authenticated()<br>                .and()<br>                .csrf().disable()<br>                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS) <span class="hljs-comment">// 设置无状态连接，即不创建session</span><br>                .and()<br>                .cors().disable() <span class="hljs-comment">// 解决跨域问题</span><br>                .exceptionHandling()<br>                .authenticationEntryPoint(<span class="hljs-keyword">new</span> <span class="hljs-title class_">JwtAuthenticationExceptionHandler</span>()) <span class="hljs-comment">// 未认证异常处理</span><br>                .accessDeniedHandler(<span class="hljs-keyword">new</span> <span class="hljs-title class_">JwtAccessDeniedExceptionHandler</span>()) <span class="hljs-comment">// 权限不足异常处理</span><br>                .and()<br>                .build();<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<h5 id="2-4-5-认证过滤器"><a href="#2-4-5-认证过滤器" class="headerlink" title="2.4.5. 认证过滤器"></a>2.4.5. 认证过滤器</h5><p>当我们登录成功后，一般会返回一个token，然后前端后续将这个token，携带于请求头，想后端发起访问，后端解析这个token，来判断该请求是否认证通过，通过，则放行。在SpringSecurity中，我们可以通过addFilterBefore()将我们自定义过滤器添加上去，然后再我们的自定义过滤器中，实现相关的token解析逻辑。<br>首先我们定义一个MyUserDetails类，实现UserDetails接口，UserDetails提供用户的核心信息，在前两篇文章中，用户的核心信息，存储于UserContextDetails类中，这里我们沿用该类，当然，也可以自己重新定义一个类用于保存用户的核心信息，甚至直接把用户实体类作为核心信息，这个依据项目的需要。目前的实现中，除了获取用户名之外，其他都是空实现，因为其他的接口，暂时还不需要。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">package</span> com.yang.infrastructure.security;<br><br><span class="hljs-keyword">import</span> com.yang.infrastructure.auth.UserContextDetails;<br><span class="hljs-keyword">import</span> lombok.Data;<br><span class="hljs-keyword">import</span> org.springframework.security.core.GrantedAuthority;<br><span class="hljs-keyword">import</span> org.springframework.security.core.userdetails.UserDetails;<br><br><span class="hljs-keyword">import</span> java.util.Collection;<br><br><span class="hljs-meta">@Data</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">MyUserDetails</span> <span class="hljs-keyword">implements</span> <span class="hljs-title class_">UserDetails</span> &#123;<br>    <span class="hljs-keyword">private</span> UserContextDetails userContextDetails;<br><br>    <span class="hljs-keyword">private</span> String password;<br><br>    <span class="hljs-keyword">public</span> <span class="hljs-title function_">MyUserDetails</span><span class="hljs-params">(UserContextDetails userContextDetails)</span> &#123;<br>        <span class="hljs-built_in">this</span>.userContextDetails = userContextDetails;<br>    &#125;<br><br>    <span class="hljs-keyword">public</span> <span class="hljs-title function_">MyUserDetails</span><span class="hljs-params">(UserContextDetails userContextDetails, String password)</span> &#123;<br>        <span class="hljs-built_in">this</span>.userContextDetails = userContextDetails;<br>        <span class="hljs-built_in">this</span>.password = password;<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> Collection&lt;? <span class="hljs-keyword">extends</span> <span class="hljs-title class_">GrantedAuthority</span>&gt; getAuthorities() &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">null</span>;<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> String <span class="hljs-title function_">getPassword</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-built_in">this</span>.password;<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> String <span class="hljs-title function_">getUsername</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-keyword">return</span> userContextDetails.getUsername();<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-type">boolean</span> <span class="hljs-title function_">isAccountNonExpired</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-type">boolean</span> <span class="hljs-title function_">isAccountNonLocked</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-type">boolean</span> <span class="hljs-title function_">isCredentialsNonExpired</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-type">boolean</span> <span class="hljs-title function_">isEnabled</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>我们我们添加一个JwtTokenVerifyFilter，这个类继承于OncePerRequestFilter，其具体实现如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">package</span> com.yang.infrastructure.security.filter;<br><br><span class="hljs-keyword">import</span> com.alibaba.fastjson.JSONObject;<br><span class="hljs-keyword">import</span> com.yang.domain.data.Role;<br><span class="hljs-keyword">import</span> com.yang.infrastructure.auth.PermissionDetails;<br><span class="hljs-keyword">import</span> com.yang.infrastructure.auth.UserContextDetails;<br><span class="hljs-keyword">import</span> com.yang.infrastructure.auth.config.JwtTokenProperty;<br><span class="hljs-keyword">import</span> com.yang.infrastructure.auth.request.JwtTokenVerifyRequest;<br><span class="hljs-keyword">import</span> com.yang.infrastructure.auth.response.JwtTokenVerifyDTO;<br><span class="hljs-keyword">import</span> com.yang.infrastructure.auth.service.JwtTokenService;<br><span class="hljs-keyword">import</span> com.yang.infrastructure.security.MyUserDetails;<br><span class="hljs-keyword">import</span> com.yang.infrastructure.utils.RedisUtils;<br><span class="hljs-keyword">import</span> com.yang.infrastructure.utils.SpringContextUtils;<br><span class="hljs-keyword">import</span> org.apache.commons.lang3.StringUtils;<br><span class="hljs-keyword">import</span> org.springframework.security.authentication.UsernamePasswordAuthenticationToken;<br><span class="hljs-keyword">import</span> org.springframework.security.core.context.SecurityContextHolder;<br><span class="hljs-keyword">import</span> org.springframework.security.core.userdetails.UserDetails;<br><span class="hljs-keyword">import</span> org.springframework.web.filter.OncePerRequestFilter;<br><br><span class="hljs-keyword">import</span> javax.servlet.FilterChain;<br><span class="hljs-keyword">import</span> javax.servlet.ServletException;<br><span class="hljs-keyword">import</span> javax.servlet.http.HttpServletRequest;<br><span class="hljs-keyword">import</span> javax.servlet.http.HttpServletResponse;<br><span class="hljs-keyword">import</span> java.io.IOException;<br><span class="hljs-keyword">import</span> java.util.List;<br><span class="hljs-keyword">import</span> java.util.stream.Collectors;<br><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">JwtTokenVerifyFilter</span> <span class="hljs-keyword">extends</span> <span class="hljs-title class_">OncePerRequestFilter</span> &#123;<br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">protected</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">doFilterInternal</span><span class="hljs-params">(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)</span> <span class="hljs-keyword">throws</span> ServletException, IOException &#123;<br>        <span class="hljs-type">String</span> <span class="hljs-variable">token</span> <span class="hljs-operator">=</span> request.getHeader(<span class="hljs-string">&quot;token&quot;</span>);<br>        <span class="hljs-keyword">if</span> (StringUtils.isEmpty(token)) &#123;<br>            filterChain.doFilter(request, response);<br>            <span class="hljs-keyword">return</span>;<br>        &#125;<br><br>        <span class="hljs-type">UserContextDetails</span> <span class="hljs-variable">userContextDetails</span> <span class="hljs-operator">=</span> <span class="hljs-literal">null</span>;<br>        <span class="hljs-type">Object</span> <span class="hljs-variable">userDetailsFromRedis</span> <span class="hljs-operator">=</span> getUserDetailsFromRedis(token);<br>        <span class="hljs-keyword">if</span> (userDetailsFromRedis != <span class="hljs-literal">null</span>) &#123;<br>            userContextDetails = (UserContextDetails) userDetailsFromRedis;<br>        &#125;<br><br>        <span class="hljs-keyword">if</span> (userContextDetails == <span class="hljs-literal">null</span>) &#123;<br>            <span class="hljs-type">JwtTokenService</span> <span class="hljs-variable">jwtTokenService</span> <span class="hljs-operator">=</span> SpringContextUtils.getBeanOfType(JwtTokenService.class);<br>            <span class="hljs-type">JwtTokenProperty</span> <span class="hljs-variable">jwtTokenProperty</span> <span class="hljs-operator">=</span> SpringContextUtils.getBeanOfType(JwtTokenProperty.class);<br><br>            <span class="hljs-type">JwtTokenVerifyRequest</span> <span class="hljs-variable">jwtTokenVerifyRequest</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">JwtTokenVerifyRequest</span>();<br>            jwtTokenVerifyRequest.setToken(token);<br>            jwtTokenVerifyRequest.setSecret(jwtTokenProperty.getSecret());<br><br>            <span class="hljs-type">JwtTokenVerifyDTO</span> <span class="hljs-variable">verify</span> <span class="hljs-operator">=</span> jwtTokenService.verify(jwtTokenVerifyRequest);<br>            <span class="hljs-keyword">if</span> (verify == <span class="hljs-literal">null</span>) &#123;<br>                filterChain.doFilter(request, response);<br>                <span class="hljs-keyword">return</span>;<br>            &#125;<br><br>            userContextDetails = <span class="hljs-keyword">new</span> <span class="hljs-title class_">UserContextDetails</span>();<br>            userContextDetails.setId(Integer.valueOf(verify.getSubject()));<br>            userContextDetails.setToken(token);<br>            userContextDetails.setUsername(verify.getPayLoads().get(<span class="hljs-string">&quot;username&quot;</span>));<br>            userContextDetails.setExtendMap(verify.getPayLoads());<br>            List&lt;Role&gt; roles = JSONObject.parseArray(verify.getPayLoads().get(<span class="hljs-string">&quot;roles&quot;</span>), Role.class);<br>            userContextDetails.setPermissionDetails(roles.stream().map(role -&gt; &#123;<br>                <span class="hljs-type">PermissionDetails</span> <span class="hljs-variable">permissionDetails</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">PermissionDetails</span>();<br>                permissionDetails.setName(role.getCode());<br>                <span class="hljs-keyword">return</span> permissionDetails;<br>            &#125;).collect(Collectors.toList()));<br>        &#125;<br><br>        <span class="hljs-keyword">if</span> (userContextDetails == <span class="hljs-literal">null</span>) &#123;<br>            filterChain.doFilter(request, response);<br>            <span class="hljs-keyword">return</span>;<br>        &#125;<br>        <span class="hljs-type">UserDetails</span> <span class="hljs-variable">userDetails</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">MyUserDetails</span>(userContextDetails);<br>        <span class="hljs-type">UsernamePasswordAuthenticationToken</span> <span class="hljs-variable">authenticationToken</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">UsernamePasswordAuthenticationToken</span>(userDetails, <span class="hljs-literal">null</span>, <span class="hljs-literal">null</span>);<br>        SecurityContextHolder.getContext().setAuthentication(authenticationToken);<br>        filterChain.doFilter(request, response);<br>    &#125;<br><br>    <span class="hljs-keyword">private</span> Object <span class="hljs-title function_">getUserDetailsFromRedis</span><span class="hljs-params">(String token)</span> &#123;<br>        <span class="hljs-type">RedisUtils</span> <span class="hljs-variable">redisUtils</span> <span class="hljs-operator">=</span> SpringContextUtils.getBeanOfType(RedisUtils.class);<br>        <span class="hljs-keyword">return</span> redisUtils.getKey(<span class="hljs-string">&quot;token:&quot;</span> + token);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>其实从上面的实现中，会发现，与我们之前的JwtTokenVerifyInterceptor很像，不过我们当时只是简单地通过线程上下文来传递用户核心信息，而SpringSecurity对此进一步作出封装:<br>1）UsernamePasswordAuthenticationToken：SpringSecurity用于表示基于用户名和密码地身份验证对象，继承自AbstractAuthenticationToken类，包含了用户名和密码等凭据信息，在身份验证过程中，UsernamePasswordAuthenticationToken用于封装用户提交地身份验证凭据，并在后续身份验证过程中进行传递和处理。<br>2）SecurityContextHolder：SpringSecurity用于管理安全上下文地持有者，提供一个静态方法getContext()用于获取当前线程中地安全上下文。<br>最后，我们将这个过滤器，添加到SpringSecurity的配置类中</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Configuration</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">SecurityConfig</span> &#123;<br>    <span class="hljs-meta">@Bean</span><br>    SecurityFilterChain <span class="hljs-title function_">filterChain</span><span class="hljs-params">(HttpSecurity httpSecurity)</span> <span class="hljs-keyword">throws</span> Exception &#123;<br>        <span class="hljs-comment">// 登录和注册接口，放行</span><br>        <span class="hljs-keyword">return</span> httpSecurity.authorizeRequests()<br>                .antMatchers(<span class="hljs-string">&quot;/user/login&quot;</span>).permitAll()<br>                .antMatchers(<span class="hljs-string">&quot;/user/register&quot;</span>).permitAll()<br>                .anyRequest().authenticated()<br>                .and()<br>                .csrf().disable()<br>                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS) <span class="hljs-comment">// 设置无状态连接，即不创建session</span><br>                .and()<br>                .cors().disable() <span class="hljs-comment">// 解决跨域问题</span><br>                .exceptionHandling()<br>                .authenticationEntryPoint(<span class="hljs-keyword">new</span> <span class="hljs-title class_">JwtAuthenticationExceptionHandler</span>()) <span class="hljs-comment">// 未认证异常处理</span><br>                .accessDeniedHandler(<span class="hljs-keyword">new</span> <span class="hljs-title class_">JwtAccessDeniedExceptionHandler</span>()) <span class="hljs-comment">// 权限不足异常处理</span><br>                .and()<br>                .addFilterBefore(<span class="hljs-keyword">new</span> <span class="hljs-title class_">JwtTokenVerifyFilter</span>(), UsernamePasswordAuthenticationFilter.class) <span class="hljs-comment">// 添加自定义过滤器</span><br>                .build();<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>然后我们启动项目，先进行登录</p>
+<img src="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A01%E2%80%94SpringSecurity%E8%AE%A4%E8%AF%81/12.png" srcset="/img/loading.gif" lazyload class="">
+<p>登录成功后，携带该token，作为请求头，访问&#x2F;security&#x2F;hello测试接口,访问成功</p>
+<img src="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A01%E2%80%94SpringSecurity%E8%AE%A4%E8%AF%81/13.png" srcset="/img/loading.gif" lazyload class="">
+<p>然后我们携带一个无效的token，作为请求头，再次访问&#x2F;security&#x2F;hello测试接口</p>
+<img src="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A01%E2%80%94SpringSecurity%E8%AE%A4%E8%AF%81/14.png" srcset="/img/loading.gif" lazyload class="">
+
+<h3 id="3-参考文章"><a href="#3-参考文章" class="headerlink" title="3. 参考文章"></a>3. 参考文章</h3><p><a target="_blank" rel="noopener" href="https://segmentfault.com/a/1190000041947192">https://segmentfault.com/a/1190000041947192</a><br><a target="_blank" rel="noopener" href="https://blog.csdn.net/m0_37989980/article/details/107519382">https://blog.csdn.net/m0_37989980/article/details/107519382</a><br><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/455858001">https://zhuanlan.zhihu.com/p/455858001</a></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/SpringBoot/" class="print-no-link">#SpringBoot</a>
+      
+        <a href="/tags/SpringSecurity/" class="print-no-link">#SpringSecurity</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>SpringSecurity学习1—SpringSecurity认证</div>
+      <div>https://cxydhi.github.io/2024/04/03/SpringSecurity学习1—SpringSecurity认证/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>沉河不浮</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年4月3日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/" title="SpringSecurity学习2—SpringSecurity授权">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">SpringSecurity学习2—SpringSecurity授权</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/04/03/%E9%89%B4%E6%9D%83%E5%AD%A6%E4%B9%A0/" title="鉴权学习">
+                        <span class="hidden-mobile">鉴权学习</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

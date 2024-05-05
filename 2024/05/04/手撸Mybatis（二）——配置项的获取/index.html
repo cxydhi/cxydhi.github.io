@@ -1,0 +1,663 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="沉河不浮">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="配置项解析在mybatis中，一般我们会定义一个mapper-config.xml文件，来配置数据库连接的相关信息，以及我们的mapperxml文件存放目录。在本章，我们会读取这些文件，将其配置信息进行解析。因为涉及到xml的解析，因此，我们先添加dom4j的依赖，以方便后续解析xml 12345&lt;dependency&gt;&lt;groupId&gt;org.dom4j&lt;&#x2F;grou">
+<meta property="og:type" content="article">
+<meta property="og:title" content="手撸Mybatis（二）——配置项的获取">
+<meta property="og:url" content="https://cxydhi.github.io/2024/05/04/%E6%89%8B%E6%92%B8Mybatis%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E2%80%94%E9%85%8D%E7%BD%AE%E9%A1%B9%E7%9A%84%E8%8E%B7%E5%8F%96/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="配置项解析在mybatis中，一般我们会定义一个mapper-config.xml文件，来配置数据库连接的相关信息，以及我们的mapperxml文件存放目录。在本章，我们会读取这些文件，将其配置信息进行解析。因为涉及到xml的解析，因此，我们先添加dom4j的依赖，以方便后续解析xml 12345&lt;dependency&gt;&lt;groupId&gt;org.dom4j&lt;&#x2F;grou">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cxydhi.github.io/2024/05/04/%E6%89%8B%E6%92%B8Mybatis%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E2%80%94%E9%85%8D%E7%BD%AE%E9%A1%B9%E7%9A%84%E8%8E%B7%E5%8F%96/1.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/05/04/%E6%89%8B%E6%92%B8Mybatis%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E2%80%94%E9%85%8D%E7%BD%AE%E9%A1%B9%E7%9A%84%E8%8E%B7%E5%8F%96/2.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/05/04/%E6%89%8B%E6%92%B8Mybatis%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E2%80%94%E9%85%8D%E7%BD%AE%E9%A1%B9%E7%9A%84%E8%8E%B7%E5%8F%96/3.png">
+<meta property="article:published_time" content="2024-05-04T09:51:35.000Z">
+<meta property="article:modified_time" content="2024-05-04T09:59:04.501Z">
+<meta property="article:author" content="沉河不浮">
+<meta property="article:tag" content="Mybatis">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://cxydhi.github.io/2024/05/04/%E6%89%8B%E6%92%B8Mybatis%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E2%80%94%E9%85%8D%E7%BD%AE%E9%A1%B9%E7%9A%84%E8%8E%B7%E5%8F%96/1.png">
+  
+  
+  
+  <title>手撸Mybatis（二）——配置项的获取 - Hexo</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"cxydhi.github.io","root":"/","version":"1.9.5","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Fluid</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="手撸Mybatis（二）——配置项的获取"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-05-04 17:51" pubdate>
+          2024年5月4日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          18k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          150 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">手撸Mybatis（二）——配置项的获取</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h3 id="配置项解析"><a href="#配置项解析" class="headerlink" title="配置项解析"></a>配置项解析</h3><p>在mybatis中，一般我们会定义一个mapper-config.xml文件，来配置数据库连接的相关信息，以及我们的mapperxml文件存放目录。在本章，我们会读取这些文件，将其配置信息进行解析。<br>因为涉及到xml的解析，因此，我们先添加dom4j的依赖，以方便后续解析xml</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs json">&lt;dependency&gt;<br>&lt;groupId&gt;org.dom4j&lt;/groupId&gt;<br>&lt;artifactId&gt;dom4j&lt;/artifactId&gt;<br>&lt;version&gt;<span class="hljs-number">2.1</span><span class="hljs-number">.3</span>&lt;/version&gt;<br>&lt;/dependency&gt;<br></code></pre></td></tr></table></figure>
+<p>mybatis-config.xml的内容如下，对于每一个环境，都有对应的数据源信息，此外，mappers标签存储的是mapper.xml文件的位置。</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs json">&lt;?xml version=<span class="hljs-string">&quot;1.0&quot;</span> encoding=<span class="hljs-string">&quot;UTF-8&quot;</span> ?&gt;<br>&lt;!DOCTYPE configuration<br>PUBLIC <span class="hljs-string">&quot;-//mybatis.org//DTD Config 3.0//EN&quot;</span><br><span class="hljs-string">&quot;http://mybatis.org/dtd/mybatis-3-config.dtd&quot;</span>&gt;<br>&lt;configuration&gt;<br>&lt;environments default=<span class="hljs-string">&quot;development&quot;</span>&gt;<br>&lt;environment id=<span class="hljs-string">&quot;development&quot;</span>&gt;<br>&lt;transactionManager type=<span class="hljs-string">&quot;JDBC&quot;</span>/&gt;<br>&lt;dataSource type=<span class="hljs-string">&quot;POOLED&quot;</span>&gt;<br>&lt;property name=<span class="hljs-string">&quot;driver&quot;</span> value=<span class="hljs-string">&quot;com.mysql.jdbc.Driver&quot;</span>/&gt;<br>&lt;property name=<span class="hljs-string">&quot;url&quot;</span> value=<span class="hljs-string">&quot;jdbc:mysql://192.168.102.128:3306/test&quot;</span>/&gt;<br>&lt;property name=<span class="hljs-string">&quot;username&quot;</span> value=<span class="hljs-string">&quot;root&quot;</span>/&gt;<br>&lt;property name=<span class="hljs-string">&quot;password&quot;</span> value=<span class="hljs-string">&quot;123456&quot;</span>/&gt;<br>&lt;/dataSource&gt;<br>&lt;/environment&gt;<br>&lt;/environments&gt;<br>&lt;mappers&gt;<br>&lt;mapper resource=<span class="hljs-string">&quot;mapper/UserMapper.xml&quot;</span>/&gt;<br>&lt;/mappers&gt;<br>&lt;/configuration&gt;<br></code></pre></td></tr></table></figure>
+<p>首先，我们添加MybatisDataSource，用来记录数据源信息</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><code class="hljs json">package com.yang.mybatis.config;<br><br>import java.io.Serializable;<br><br>public class MybatisDataSource implements Serializable <span class="hljs-punctuation">&#123;</span><br>private String driver;<br>private String url;<br>private String username;<br>private String password;<br><br>public String getDriver() <span class="hljs-punctuation">&#123;</span><br>return driver;<br><span class="hljs-punctuation">&#125;</span><br><br>public String getUrl() <span class="hljs-punctuation">&#123;</span><br>return url;<br><span class="hljs-punctuation">&#125;</span><br><br>public String getUsername() <span class="hljs-punctuation">&#123;</span><br>return username;<br><span class="hljs-punctuation">&#125;</span><br><br>public String getPassword() <span class="hljs-punctuation">&#123;</span><br>return password;<br><span class="hljs-punctuation">&#125;</span><br><br>public void setDriver(String driver) <span class="hljs-punctuation">&#123;</span><br>this.driver = driver;<br><span class="hljs-punctuation">&#125;</span><br><br>public void setUrl(String url) <span class="hljs-punctuation">&#123;</span><br>this.url = url;<br><span class="hljs-punctuation">&#125;</span><br><br>public void setUsername(String username) <span class="hljs-punctuation">&#123;</span><br>this.username = username;<br><span class="hljs-punctuation">&#125;</span><br><br>public void setPassword(String password) <span class="hljs-punctuation">&#123;</span><br>this.password = password;<br><span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span><br><br></code></pre></td></tr></table></figure>
+<p>然后添加一个MybatisEnvironment，用来存储环境信息</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs json">package com.yang.mybatis.config;<br><br>import java.io.Serializable;<br><br>public class MybatisEnvironment implements Serializable <span class="hljs-punctuation">&#123;</span><br>private String id;<br><br>private MybatisDataSource mybatisDataSource;<br><br>public String getId() <span class="hljs-punctuation">&#123;</span><br>return id;<br><span class="hljs-punctuation">&#125;</span><br><br>public void setId(String id) <span class="hljs-punctuation">&#123;</span><br>this.id = id;<br><span class="hljs-punctuation">&#125;</span><br><br>public MybatisDataSource getMybatisDataSource() <span class="hljs-punctuation">&#123;</span><br>return mybatisDataSource;<br><span class="hljs-punctuation">&#125;</span><br><br>public void setMybatisDataSource(MybatisDataSource mybatisDataSource) <span class="hljs-punctuation">&#123;</span><br>this.mybatisDataSource = mybatisDataSource;<br><span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span><br><br></code></pre></td></tr></table></figure>
+<p>然后是MybatisConfiguration，我们读取mybatis-config.xml配置文件后，配置信息就存储在这个类中。</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><code class="hljs json">package com.yang.mybatis.config;<br><br>import java.io.Serializable;<br>import java.util.ArrayList;<br>import java.util.HashMap;<br>import java.util.List;<br>import java.util.Map;<br><br>public class MybatisConfiguration implements Serializable <span class="hljs-punctuation">&#123;</span><br>private Map&lt;String<span class="hljs-punctuation">,</span> MybatisEnvironment&gt; id2EnvironmentMap = new HashMap&lt;&gt;();<br><br>private MybatisEnvironment defaultMybatisEnvironment;<br><br>private List&lt;String&gt; mapperPaths = new ArrayList&lt;&gt;();<br><br>public void addEnvironment(String id<span class="hljs-punctuation">,</span> MybatisEnvironment mybatisEnvironment) <span class="hljs-punctuation">&#123;</span><br>this.id2EnvironmentMap.put(id<span class="hljs-punctuation">,</span> mybatisEnvironment);<br><span class="hljs-punctuation">&#125;</span><br><br>public MybatisEnvironment getEnvironment(String id) <span class="hljs-punctuation">&#123;</span><br>return id2EnvironmentMap.get(id);<br><span class="hljs-punctuation">&#125;</span><br><br>public MybatisEnvironment getDefaultMybatisEnvironment() <span class="hljs-punctuation">&#123;</span><br>return defaultMybatisEnvironment;<br><span class="hljs-punctuation">&#125;</span><br><br>public void setDefaultMybatisEnvironment(MybatisEnvironment defaultMybatisEnvironment) <span class="hljs-punctuation">&#123;</span><br>this.defaultMybatisEnvironment = defaultMybatisEnvironment;<br><span class="hljs-punctuation">&#125;</span><br><br>public void addMapperPath(String mapperPath) <span class="hljs-punctuation">&#123;</span><br>this.mapperPaths.add(mapperPath);<br><span class="hljs-punctuation">&#125;</span><br><br>public List&lt;String&gt; getMapperPaths() <span class="hljs-punctuation">&#123;</span><br>return this.mapperPaths;<br><span class="hljs-punctuation">&#125;</span><br><br>public List&lt;MybatisEnvironment&gt; getEnvironments() <span class="hljs-punctuation">&#123;</span><br>return new ArrayList&lt;&gt;(id2EnvironmentMap.values());<br><span class="hljs-punctuation">&#125;</span><br><br><span class="hljs-punctuation">&#125;</span><br><br></code></pre></td></tr></table></figure>
+<p>对于mybatis-config.xml的解析，我们定义一个IMybatisConfigParser接口</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs json">package com.yang.mybatis.config.parser;<br><br>import com.yang.mybatis.config.MybatisConfiguration;<br><br>public interface IMybatisConfigurationParser <span class="hljs-punctuation">&#123;</span><br>MybatisConfiguration parser(String path) ;<br><span class="hljs-punctuation">&#125;</span><br><br></code></pre></td></tr></table></figure>
+<p>然后定义其实现类：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br></pre></td><td class="code"><pre><code class="hljs json">package com.yang.mybatis.config.parser;<br><br>import com.yang.mybatis.config.MybatisConfiguration;<br>import com.yang.mybatis.config.MybatisDataSource;<br>import com.yang.mybatis.config.MybatisEnvironment;<br>import org.dom4j.Document;<br>import org.dom4j.Element;<br>import org.dom4j.io.SAXReader;<br><br>import java.io.InputStream;<br>import java.util.HashMap;<br>import java.util.List;<br>import java.util.Map;<br><br>public class XmlMybatisConfigurationParser implements IMybatisConfigurationParser <span class="hljs-punctuation">&#123;</span><br><br>@Override<br>public MybatisConfiguration parser(String path) <span class="hljs-punctuation">&#123;</span><br>MybatisConfiguration mybatisConfiguration = new MybatisConfiguration();<br>try <span class="hljs-punctuation">&#123;</span><br>InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(path);<br>SAXReader saxReader = new SAXReader();<br><span class="hljs-comment">// 1. 读取文档</span><br>Document document = saxReader.read(inputStream);<br>Element root = document.getRootElement();<br><br>parseEnvironments(mybatisConfiguration<span class="hljs-punctuation">,</span> root.element(<span class="hljs-string">&quot;environments&quot;</span>));<br>parseMappers(mybatisConfiguration<span class="hljs-punctuation">,</span> root.element(<span class="hljs-string">&quot;mappers&quot;</span>));<br><span class="hljs-punctuation">&#125;</span> catch (Exception e) <span class="hljs-punctuation">&#123;</span><br>e.printStackTrace();<br><span class="hljs-punctuation">&#125;</span><br>return mybatisConfiguration;<br><span class="hljs-punctuation">&#125;</span><br><br>private void parseMappers(MybatisConfiguration mybatisConfiguration<span class="hljs-punctuation">,</span> Element mappers) <span class="hljs-punctuation">&#123;</span><br>List&lt;Element&gt; mapperList = mappers.elements(<span class="hljs-string">&quot;mapper&quot;</span>);<br>for (Element mapper <span class="hljs-punctuation">:</span> mapperList) <span class="hljs-punctuation">&#123;</span><br>String resource = mapper.attributeValue(<span class="hljs-string">&quot;resource&quot;</span>);<br>mybatisConfiguration.addMapperPath(resource);<br><span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span><br><br>private void parseEnvironments(MybatisConfiguration mybatisConfiguration<span class="hljs-punctuation">,</span> Element environments) <span class="hljs-punctuation">&#123;</span><br>String defaultId = environments.attributeValue(<span class="hljs-string">&quot;default&quot;</span>);<br>for (Element element <span class="hljs-punctuation">:</span> environments.elements()) <span class="hljs-punctuation">&#123;</span><br>String id = element.attributeValue(<span class="hljs-string">&quot;id&quot;</span>);<br><br>Element dataSource = element.element(<span class="hljs-string">&quot;dataSource&quot;</span>);<br>List&lt;Element&gt; properties = dataSource.elements(<span class="hljs-string">&quot;property&quot;</span>);<br>Map&lt;String<span class="hljs-punctuation">,</span> String&gt; propertyMap = new HashMap&lt;&gt;();<br>for (Element property <span class="hljs-punctuation">:</span> properties) <span class="hljs-punctuation">&#123;</span><br>propertyMap.put(property.attributeValue(<span class="hljs-string">&quot;name&quot;</span>)<span class="hljs-punctuation">,</span> property.attributeValue(<span class="hljs-string">&quot;value&quot;</span>));<br><span class="hljs-punctuation">&#125;</span><br>String driver = propertyMap.get(<span class="hljs-string">&quot;driver&quot;</span>);<br>String url = propertyMap.get(<span class="hljs-string">&quot;url&quot;</span>);<br>String username = propertyMap.get(<span class="hljs-string">&quot;username&quot;</span>);<br>String password = propertyMap.get(<span class="hljs-string">&quot;password&quot;</span>);<br>MybatisDataSource mybatisDataSource = new MybatisDataSource();<br>mybatisDataSource.setDriver(driver);<br>mybatisDataSource.setUrl(url);<br>mybatisDataSource.setUsername(username);<br>mybatisDataSource.setPassword(password);<br><br>MybatisEnvironment mybatisEnvironment = new MybatisEnvironment();<br>mybatisEnvironment.setId(id);<br>mybatisEnvironment.setMybatisDataSource(mybatisDataSource);<br>mybatisConfiguration.addEnvironment(id<span class="hljs-punctuation">,</span> mybatisEnvironment);<br>if (id.equals(defaultId)) <span class="hljs-punctuation">&#123;</span><br>mybatisConfiguration.setDefaultMybatisEnvironment(mybatisEnvironment);<br><span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span><br><br></code></pre></td></tr></table></figure>
+<p>然后添加测试代码进行测试：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs json">IMybatisConfigurationParser mybatisConfigurationParser = new XmlMybatisConfigurationParser();<br>MybatisConfiguration mybatisConfiguration = mybatisConfigurationParser.parser(<span class="hljs-string">&quot;mybatis-config.xml&quot;</span>);<br>System.out.println(<span class="hljs-string">&quot;mapperPaths==========&quot;</span>);<br>for (String mapperPath <span class="hljs-punctuation">:</span> mybatisConfiguration.getMapperPaths()) <span class="hljs-punctuation">&#123;</span><br>System.out.println(mapperPath);<br><span class="hljs-punctuation">&#125;</span><br>System.out.println(<span class="hljs-string">&quot;environments========&quot;</span>);<br>for (MybatisEnvironment environment <span class="hljs-punctuation">:</span> mybatisConfiguration.getEnvironments()) <span class="hljs-punctuation">&#123;</span><br>MybatisDataSource mybatisDataSource = environment.getMybatisDataSource();<br>System.out.println(<span class="hljs-string">&quot;id:&quot;</span> + environment.getId()<br>+ <span class="hljs-string">&quot;,driver:&quot;</span> + mybatisDataSource.getDriver()<br>+ <span class="hljs-string">&quot;,url:&quot;</span> + mybatisDataSource.getUrl()<br>+ <span class="hljs-string">&quot;,username:&quot;</span> + mybatisDataSource.getUsername()<br>+ <span class="hljs-string">&quot;,password:&quot;</span> + mybatisDataSource.getPassword());<br><span class="hljs-punctuation">&#125;</span><br>System.out.println(<span class="hljs-string">&quot;defaultEnvironment=======&quot;</span>);<br>MybatisEnvironment defaultMybatisEnvironment = mybatisConfiguration.getDefaultMybatisEnvironment();<br>MybatisDataSource mybatisDataSource = defaultMybatisEnvironment.getMybatisDataSource();<br>System.out.println(<span class="hljs-string">&quot;id:&quot;</span> + defaultMybatisEnvironment.getId()<br>+ <span class="hljs-string">&quot;,driver:&quot;</span> + mybatisDataSource.getDriver()<br>+ <span class="hljs-string">&quot;,url:&quot;</span> + mybatisDataSource.getUrl()<br>+ <span class="hljs-string">&quot;,username:&quot;</span> + mybatisDataSource.getUsername()<br>+ <span class="hljs-string">&quot;,password:&quot;</span> + mybatisDataSource.getPassword());<br></code></pre></td></tr></table></figure>
+<p>结果如下：</p>
+<img src="/2024/05/04/%E6%89%8B%E6%92%B8Mybatis%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E2%80%94%E9%85%8D%E7%BD%AE%E9%A1%B9%E7%9A%84%E8%8E%B7%E5%8F%96/1.png" srcset="/img/loading.gif" lazyload class="">
+<h3 id="mapperXml的解析"><a href="#mapperXml的解析" class="headerlink" title="mapperXml的解析"></a>mapperXml的解析</h3><p>首先添加一个MybatisSqlStatement</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><code class="hljs json">package com.yang.mybatis.config;<br><br>import java.io.Serializable;<br><br>public class MybatisSqlStatement implements Serializable <span class="hljs-punctuation">&#123;</span><br>private String namespace;<br><br>private String id;<br><br>private String sql;<br><br>public String getNamespace() <span class="hljs-punctuation">&#123;</span><br>return namespace;<br><span class="hljs-punctuation">&#125;</span><br><br>public void setNamespace(String namespace) <span class="hljs-punctuation">&#123;</span><br>this.namespace = namespace;<br><span class="hljs-punctuation">&#125;</span><br><br>public String getId() <span class="hljs-punctuation">&#123;</span><br>return id;<br><span class="hljs-punctuation">&#125;</span><br><br>public void setId(String id) <span class="hljs-punctuation">&#123;</span><br>this.id = id;<br><span class="hljs-punctuation">&#125;</span><br><br>public String getSql() <span class="hljs-punctuation">&#123;</span><br>return sql;<br><span class="hljs-punctuation">&#125;</span><br><br>public void setSql(String sql) <span class="hljs-punctuation">&#123;</span><br>this.sql = sql;<br><span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span><br><br></code></pre></td></tr></table></figure>
+<p>添加解析mapper文件的接口</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs json">package com.yang.mybatis.config.parser;<br><br>import com.yang.mybatis.config.MybatisSqlStatement;<br><br>import java.util.List;<br><br>public interface IMybatisMapperParser <span class="hljs-punctuation">&#123;</span><br>List&lt;MybatisSqlStatement&gt; parseMapper(String path);<br><span class="hljs-punctuation">&#125;</span><br><br></code></pre></td></tr></table></figure>
+<p>具体实现：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><code class="hljs json">package com.yang.mybatis.config.parser;<br><br>import com.yang.mybatis.config.MybatisSqlStatement;<br>import org.dom4j.Document;<br>import org.dom4j.DocumentException;<br>import org.dom4j.Element;<br>import org.dom4j.io.SAXReader;<br><br>import java.io.InputStream;<br>import java.util.ArrayList;<br>import java.util.HashSet;<br>import java.util.List;<br>import java.util.Set;<br><br>public class XmlMybatisMapperParser implements IMybatisMapperParser <span class="hljs-punctuation">&#123;</span><br>private final static Set&lt;String&gt; tagSet = new HashSet&lt;&gt;();<br><br>static <span class="hljs-punctuation">&#123;</span><br>tagSet.add(<span class="hljs-string">&quot;select&quot;</span>);<br>tagSet.add(<span class="hljs-string">&quot;insert&quot;</span>);<br>tagSet.add(<span class="hljs-string">&quot;update&quot;</span>);<br>tagSet.add(<span class="hljs-string">&quot;delete&quot;</span>);<br>tagSet.add(<span class="hljs-string">&quot;SELECT&quot;</span>);<br>tagSet.add(<span class="hljs-string">&quot;INSERT&quot;</span>);<br>tagSet.add(<span class="hljs-string">&quot;UPDATE&quot;</span>);<br>tagSet.add(<span class="hljs-string">&quot;DELETE&quot;</span>);<br><span class="hljs-punctuation">&#125;</span><br>@Override<br>public List&lt;MybatisSqlStatement&gt; parseMapper(String path) <span class="hljs-punctuation">&#123;</span><br>List&lt;MybatisSqlStatement&gt; mybatisSqlStatements = new ArrayList&lt;&gt;();<br>try <span class="hljs-punctuation">&#123;</span><br>InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(path);<br>SAXReader saxReader = new SAXReader();<br>Document document = saxReader.read(inputStream);<br>Element root = document.getRootElement();<br><br>for (String tag <span class="hljs-punctuation">:</span> tagSet) <span class="hljs-punctuation">&#123;</span><br>List&lt;Element&gt; elements = root.elements(tag);<br>parseStatement(mybatisSqlStatements<span class="hljs-punctuation">,</span> elements<span class="hljs-punctuation">,</span> root);<br><span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span> catch (DocumentException e) <span class="hljs-punctuation">&#123;</span><br>e.printStackTrace();<br><span class="hljs-punctuation">&#125;</span><br>return mybatisSqlStatements;<br><span class="hljs-punctuation">&#125;</span><br><br>private void parseStatement(List&lt;MybatisSqlStatement&gt; mybatisSqlStatements<span class="hljs-punctuation">,</span> List&lt;Element&gt; elements<span class="hljs-punctuation">,</span> Element root) <span class="hljs-punctuation">&#123;</span><br>if (elements == <span class="hljs-literal"><span class="hljs-keyword">null</span></span> || elements.isEmpty()) <span class="hljs-punctuation">&#123;</span><br>return;<br><span class="hljs-punctuation">&#125;</span><br>String namespace = root.attributeValue(<span class="hljs-string">&quot;namespace&quot;</span>);<br>for (Element element <span class="hljs-punctuation">:</span> elements) <span class="hljs-punctuation">&#123;</span><br>String id = element.attributeValue(<span class="hljs-string">&quot;id&quot;</span>);<br>String sql = element.getText().trim();<br><br>MybatisSqlStatement mybatisSqlStatement = new MybatisSqlStatement();<br>mybatisSqlStatement.setNamespace(namespace);<br>mybatisSqlStatement.setId(id);<br>mybatisSqlStatement.setSql(sql);<br><br>mybatisSqlStatements.add(mybatisSqlStatement);<br><span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span><br><br></code></pre></td></tr></table></figure>
+<p>然后，我们创建一个UserMapper.xml，用于测试，该文件内容如下：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs json">&lt;?xml version=<span class="hljs-string">&quot;1.0&quot;</span> encoding=<span class="hljs-string">&quot;UTF-8&quot;</span> ?&gt;<br>&lt;!DOCTYPE mapper<br>PUBLIC <span class="hljs-string">&quot;-//mybatis.org//DTD Mapper 3.0//EN&quot;</span><br><span class="hljs-string">&quot;http://mybatis.org/dtd/mybatis-3-mapper.dtd&quot;</span>&gt;<br><br><br>&lt;mapper namespace=<span class="hljs-string">&quot;com.yang.mybatis.test.IUserMapper&quot;</span>&gt;<br>&lt;select id=<span class="hljs-string">&quot;queryUserName&quot;</span>&gt;<br>select user_name from user where id = #<span class="hljs-punctuation">&#123;</span>id<span class="hljs-punctuation">&#125;</span><br>&lt;/select&gt;<br>&lt;select id=<span class="hljs-string">&quot;queryUserAge&quot;</span>&gt;<br>select age from user where id = #<span class="hljs-punctuation">&#123;</span>id<span class="hljs-punctuation">&#125;</span><br>&lt;/select&gt;<br>&lt;/mapper&gt;<br></code></pre></td></tr></table></figure>
+<p>添加测试代码，进行测试：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs json">public static void main(String<span class="hljs-punctuation">[</span><span class="hljs-punctuation">]</span> args) <span class="hljs-punctuation">&#123;</span><br>IMybatisMapperParser mybatisMapperParser = new XmlMybatisMapperParser();<br>List&lt;MybatisSqlStatement&gt; mybatisSqlStatements = mybatisMapperParser.parseMapper(<span class="hljs-string">&quot;mapper/UserMapper.xml&quot;</span>);<br>for (MybatisSqlStatement mybatisSqlStatement <span class="hljs-punctuation">:</span> mybatisSqlStatements) <span class="hljs-punctuation">&#123;</span><br>System.out.println(<span class="hljs-string">&quot;=================&quot;</span>);<br>System.out.println(<span class="hljs-string">&quot;namespace:&quot;</span> + mybatisSqlStatement.getNamespace());<br>System.out.println(<span class="hljs-string">&quot;id:&quot;</span> + mybatisSqlStatement.getId());<br>System.out.println(<span class="hljs-string">&quot;sql:&quot;</span> + mybatisSqlStatement.getSql());<br><span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span><br></code></pre></td></tr></table></figure>
+<p>结果如下：</p>
+<img src="/2024/05/04/%E6%89%8B%E6%92%B8Mybatis%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E2%80%94%E9%85%8D%E7%BD%AE%E9%A1%B9%E7%9A%84%E8%8E%B7%E5%8F%96/2.png" srcset="/img/loading.gif" lazyload class="">
+<h3 id="MapperProxyFactory注册Mapper"><a href="#MapperProxyFactory注册Mapper" class="headerlink" title="MapperProxyFactory注册Mapper"></a>MapperProxyFactory注册Mapper</h3><p>这里再修改一些MybatisConfiguration，因为mapperXML里的内容，其实我认为也属于配置项，因此收敛到MybatisConfiguration，方便后续统一管理</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><code class="hljs json">package com.yang.mybatis.config;<br><br>import java.io.Serializable;<br>import java.util.ArrayList;<br>import java.util.HashMap;<br>import java.util.List;<br>import java.util.Map;<br><br>public class MybatisConfiguration implements Serializable <span class="hljs-punctuation">&#123;</span><br>private Map&lt;String<span class="hljs-punctuation">,</span> MybatisEnvironment&gt; id2EnvironmentMap = new HashMap&lt;&gt;();<br><br>private MybatisEnvironment defaultMybatisEnvironment;<br><br>private List&lt;String&gt; mapperPaths = new ArrayList&lt;&gt;();<br><br>private Map&lt;String<span class="hljs-punctuation">,</span> List&lt;MybatisSqlStatement&gt;&gt; mapper2SqlStatementsMap = new HashMap&lt;&gt;();<br><br>public void putMybatisSqlStatementList(String mapperName<span class="hljs-punctuation">,</span> List&lt;MybatisSqlStatement&gt; mybatisSqlStatementList) <span class="hljs-punctuation">&#123;</span><br>if (mapper2SqlStatementsMap.containsKey(mapperName)) <span class="hljs-punctuation">&#123;</span><br>mapper2SqlStatementsMap.get(mapperName).addAll(mybatisSqlStatementList);<br><span class="hljs-punctuation">&#125;</span> else <span class="hljs-punctuation">&#123;</span><br>mapper2SqlStatementsMap.put(mapperName<span class="hljs-punctuation">,</span> mybatisSqlStatementList);<br><span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span><br><br>public Map&lt;String<span class="hljs-punctuation">,</span> List&lt;MybatisSqlStatement&gt;&gt; getMapper2SqlStatementsMap() <span class="hljs-punctuation">&#123;</span><br>return this.mapper2SqlStatementsMap;<br><span class="hljs-punctuation">&#125;</span><br><br>public void addEnvironment(String id<span class="hljs-punctuation">,</span> MybatisEnvironment mybatisEnvironment) <span class="hljs-punctuation">&#123;</span><br>this.id2EnvironmentMap.put(id<span class="hljs-punctuation">,</span> mybatisEnvironment);<br><span class="hljs-punctuation">&#125;</span><br><br>public MybatisEnvironment getEnvironment(String id) <span class="hljs-punctuation">&#123;</span><br>return id2EnvironmentMap.get(id);<br><span class="hljs-punctuation">&#125;</span><br><br>public MybatisEnvironment getDefaultMybatisEnvironment() <span class="hljs-punctuation">&#123;</span><br>return defaultMybatisEnvironment;<br><span class="hljs-punctuation">&#125;</span><br><br>public void setDefaultMybatisEnvironment(MybatisEnvironment defaultMybatisEnvironment) <span class="hljs-punctuation">&#123;</span><br>this.defaultMybatisEnvironment = defaultMybatisEnvironment;<br><span class="hljs-punctuation">&#125;</span><br><br>public void addMapperPath(String mapperPath) <span class="hljs-punctuation">&#123;</span><br>this.mapperPaths.add(mapperPath);<br><span class="hljs-punctuation">&#125;</span><br><br>public List&lt;String&gt; getMapperPaths() <span class="hljs-punctuation">&#123;</span><br>return this.mapperPaths;<br><span class="hljs-punctuation">&#125;</span><br><br>public List&lt;MybatisEnvironment&gt; getEnvironments() <span class="hljs-punctuation">&#123;</span><br>return new ArrayList&lt;&gt;(id2EnvironmentMap.values());<br><span class="hljs-punctuation">&#125;</span><br><br><span class="hljs-punctuation">&#125;</span><br><br></code></pre></td></tr></table></figure>
+<p>然后修改MapperProxy，接收MybatisSqlStatement数组，在执行的时候，根据执行方法，找到对应的MybatisSqlStatement，获取mapper Xml对应的sql语句，并打印出来</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><code class="hljs json">package com.yang.mybatis.mapper;<br><br>import com.yang.mybatis.config.MybatisSqlStatement;<br><br>import java.lang.reflect.InvocationHandler;<br>import java.lang.reflect.Method;<br>import java.util.HashMap;<br>import java.util.List;<br>import java.util.Map;<br><br>public class MapperProxy&lt;T&gt; implements InvocationHandler <span class="hljs-punctuation">&#123;</span><br>private Map&lt;String<span class="hljs-punctuation">,</span> MybatisSqlStatement&gt; sqlSessionMap = new HashMap&lt;&gt;();<br><br>private Class&lt;T&gt; mapperInterface;<br><br>public MapperProxy(Class&lt;T&gt; mapperInterface<span class="hljs-punctuation">,</span> List&lt;MybatisSqlStatement&gt; mybatisSqlStatementList) <span class="hljs-punctuation">&#123;</span><br>this.mapperInterface = mapperInterface;<br>for (MybatisSqlStatement mybatisSqlStatement <span class="hljs-punctuation">:</span> mybatisSqlStatementList) <span class="hljs-punctuation">&#123;</span><br>String mapperName = mybatisSqlStatement.getNamespace();<br>String id = mybatisSqlStatement.getId();<br>String key = mapperName + <span class="hljs-string">&quot;.&quot;</span> + id;<br>sqlSessionMap.put(key<span class="hljs-punctuation">,</span> mybatisSqlStatement);<br><span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span><br><br>@Override<br>public Object invoke(Object proxy<span class="hljs-punctuation">,</span> Method method<span class="hljs-punctuation">,</span> Object<span class="hljs-punctuation">[</span><span class="hljs-punctuation">]</span> args) throws Throwable <span class="hljs-punctuation">&#123;</span><br>if (Object.class.equals(method.getDeclaringClass())) <span class="hljs-punctuation">&#123;</span><br>return method.invoke(this<span class="hljs-punctuation">,</span> args);<br><span class="hljs-punctuation">&#125;</span><br>String key = this.mapperInterface.getName() + <span class="hljs-string">&quot;.&quot;</span> + method.getName();<br>return <span class="hljs-string">&quot;你的被代理了!&quot;</span> + sqlSessionMap.get(key).getSql();<br><span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span><br><br></code></pre></td></tr></table></figure>
+<p>接着修改MybatisProxyFactory，通过配置信息，加载对应的mapper.xml文件并进行解析</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><code class="hljs json">package com.yang.mybatis.mapper;<br><br>import com.yang.mybatis.config.MybatisConfiguration;<br>import com.yang.mybatis.config.MybatisSqlStatement;<br><br>import java.lang.reflect.Proxy;<br>import java.util.HashMap;<br>import java.util.List;<br>import java.util.Map;<br><br>public class MapperProxyFactory <span class="hljs-punctuation">&#123;</span><br>private Map&lt;Class<span class="hljs-punctuation">,</span> MapperProxy&gt; mapperProxyMap = new HashMap&lt;&gt;();<br><br><br>public MapperProxyFactory(MybatisConfiguration mybatisConfiguration) <span class="hljs-punctuation">&#123;</span><br>Map&lt;String<span class="hljs-punctuation">,</span> List&lt;MybatisSqlStatement&gt;&gt; mapperName2SqlStatementsMap = mybatisConfiguration.getMapper2SqlStatementsMap();<br>mapperName2SqlStatementsMap.forEach((mapperName<span class="hljs-punctuation">,</span> sqlStatementList) -&gt; <span class="hljs-punctuation">&#123;</span><br>try <span class="hljs-punctuation">&#123;</span><br>Class&lt;?&gt; type = Class.forName(mapperName);<br>mapperProxyMap.put(type<span class="hljs-punctuation">,</span> new MapperProxy(type<span class="hljs-punctuation">,</span> sqlStatementList));<br><span class="hljs-punctuation">&#125;</span> catch (ClassNotFoundException e) <span class="hljs-punctuation">&#123;</span><br>throw new RuntimeException(e);<br><span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span>);<br><span class="hljs-punctuation">&#125;</span><br><br>public Object newInstance(Class mapperType) <span class="hljs-punctuation">&#123;</span><br>MapperProxy mapperProxy = mapperProxyMap.get(mapperType);<br>return Proxy.newProxyInstance(mapperType.getClassLoader()<span class="hljs-punctuation">,</span><br>new Class<span class="hljs-punctuation">[</span><span class="hljs-punctuation">]</span><span class="hljs-punctuation">&#123;</span>mapperType<span class="hljs-punctuation">&#125;</span><span class="hljs-punctuation">,</span><br>mapperProxy);<br><span class="hljs-punctuation">&#125;</span><br><br><span class="hljs-punctuation">&#125;</span><br><br></code></pre></td></tr></table></figure>
+<p>添加测试方法，进行测试：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs json">public static void main(String<span class="hljs-punctuation">[</span><span class="hljs-punctuation">]</span> args) <span class="hljs-punctuation">&#123;</span><br>IMybatisConfigurationParser iMybatisConfigurationParser = new XmlMybatisConfigurationParser();<br>MybatisConfiguration mybatisConfiguration = iMybatisConfigurationParser.parser(<span class="hljs-string">&quot;mybatis-config.xml&quot;</span>);<br><br>IMybatisMapperParser iMybatisMapperParser = new XmlMybatisMapperParser();<br>List&lt;String&gt; mapperPaths = mybatisConfiguration.getMapperPaths();<br>for (String mapperPath <span class="hljs-punctuation">:</span> mapperPaths) <span class="hljs-punctuation">&#123;</span><br>List&lt;MybatisSqlStatement&gt; mybatisSqlStatements = iMybatisMapperParser.parseMapper(mapperPath);<br>Map&lt;String<span class="hljs-punctuation">,</span> List&lt;MybatisSqlStatement&gt;&gt; mapperNameGroupMap = mybatisSqlStatements.stream()<br>.collect(Collectors.groupingBy(MybatisSqlStatement<span class="hljs-punctuation">:</span><span class="hljs-punctuation">:</span>getNamespace));<br><br>for (Map.Entry&lt;String<span class="hljs-punctuation">,</span> List&lt;MybatisSqlStatement&gt;&gt; entry <span class="hljs-punctuation">:</span> mapperNameGroupMap.entrySet()) <span class="hljs-punctuation">&#123;</span><br>String mapperName = entry.getKey();<br>List&lt;MybatisSqlStatement&gt; sqlSessionList = entry.getValue();<br>mybatisConfiguration.putMybatisSqlStatementList(mapperName<span class="hljs-punctuation">,</span> sqlSessionList);<br><span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span><br><br>MapperProxyFactory mapperProxyFactory = new MapperProxyFactory(mybatisConfiguration);<br>IUserMapper userMapper = (IUserMapper) mapperProxyFactory.newInstance(IUserMapper.class);<br>System.out.println(userMapper.queryUserName(<span class="hljs-number">1</span>));<br><span class="hljs-punctuation">&#125;</span><br></code></pre></td></tr></table></figure>
+<p>测试结果如下：</p>
+<img src="/2024/05/04/%E6%89%8B%E6%92%B8Mybatis%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E2%80%94%E9%85%8D%E7%BD%AE%E9%A1%B9%E7%9A%84%E8%8E%B7%E5%8F%96/3.png" srcset="/img/loading.gif" lazyload class="">
+<h3 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h3><p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/338300626">https://zhuanlan.zhihu.com/p/338300626</a></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Mybatis/" class="print-no-link">#Mybatis</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>手撸Mybatis（二）——配置项的获取</div>
+      <div>https://cxydhi.github.io/2024/05/04/手撸Mybatis（二）——配置项的获取/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>沉河不浮</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年5月4日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/05/04/%E6%89%8B%E6%92%B8Mybatis%EF%BC%88%E4%B8%80%EF%BC%89%E2%80%94%E2%80%94%E4%BB%A3%E7%90%86mapper/" title="手撸Mybatis（一）——代理mapper">
+                        <span class="hidden-mobile">手撸Mybatis（一）——代理mapper</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

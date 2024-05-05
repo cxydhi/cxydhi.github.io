@@ -1,0 +1,795 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="沉河不浮">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="1. 引言1.1. 缓存的意义Redis作为一个NoSql数据库，被广泛的当作缓存数据库使用，所谓缓存，就是数据交换的缓冲区。使用缓存的具体原因有：  缓存数据存储于代码中，而代码运行在内存中，内存的读写性能远高于磁盘，通过缓存，可以大大降低用户访问并发量带来的服务器读写压力。 实际开发过程中，企业的数据量，少则几十万，多则上千万，如此大的数据量，如果没有缓存来作为“避震器”，系统是几乎撑不住的，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis学习3—Redis应用之缓存">
+<meta property="og:url" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="1. 引言1.1. 缓存的意义Redis作为一个NoSql数据库，被广泛的当作缓存数据库使用，所谓缓存，就是数据交换的缓冲区。使用缓存的具体原因有：  缓存数据存储于代码中，而代码运行在内存中，内存的读写性能远高于磁盘，通过缓存，可以大大降低用户访问并发量带来的服务器读写压力。 实际开发过程中，企业的数据量，少则几十万，多则上千万，如此大的数据量，如果没有缓存来作为“避震器”，系统是几乎撑不住的，">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/1.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/2.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/3.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/4.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/5.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/6.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/7.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/8.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/9.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/10.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/11.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/12.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/13.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/14.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/15.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/16.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/17.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/18.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/19.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/20.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/21.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/22.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/23.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/24.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/25.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/26.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/27.png">
+<meta property="article:published_time" content="2024-04-02T13:12:30.000Z">
+<meta property="article:modified_time" content="2024-04-03T05:44:22.736Z">
+<meta property="article:author" content="沉河不浮">
+<meta property="article:tag" content="中间件">
+<meta property="article:tag" content="Redis">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://cxydhi.github.io/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/1.png">
+  
+  
+  
+  <title>Redis学习3—Redis应用之缓存 - Hexo</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"cxydhi.github.io","root":"/","version":"1.9.5","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Fluid</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Redis学习3—Redis应用之缓存"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-04-02 21:12" pubdate>
+          2024年4月2日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          18k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          149 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Redis学习3—Redis应用之缓存</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h3 id="1-引言"><a href="#1-引言" class="headerlink" title="1. 引言"></a>1. 引言</h3><h4 id="1-1-缓存的意义"><a href="#1-1-缓存的意义" class="headerlink" title="1.1. 缓存的意义"></a>1.1. 缓存的意义</h4><p>Redis作为一个NoSql数据库，被广泛的当作缓存数据库使用，所谓缓存，就是数据交换的缓冲区。使用缓存的具体原因有：</p>
+<ol>
+<li>缓存数据存储于代码中，而代码运行在内存中，内存的读写性能远高于磁盘，通过缓存，可以大大降低用户访问并发量带来的服务器读写压力。</li>
+<li>实际开发过程中，企业的数据量，少则几十万，多则上千万，如此大的数据量，如果没有缓存来作为“避震器”，系统是几乎撑不住的，所以企业会大量运用缓存技术。<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/1.png" srcset="/img/loading.gif" lazyload class=""></li>
+</ol>
+<h4 id="1-2-缓存的分类"><a href="#1-2-缓存的分类" class="headerlink" title="1.2. 缓存的分类"></a>1.2. 缓存的分类</h4><p>对于缓存，我们可以分为以下几类：</p>
+<ol>
+<li>浏览器缓存：主要存在于浏览器端的缓存</li>
+<li>应用层缓存：本地缓存（比如tomcat本地缓存）或缓存数据库（比如redis）</li>
+<li>数据库缓存：在数据库中有一片空间是buffer pool，增删改查数据都会先加载到mysql的缓存中</li>
+<li>CPU缓存：当代计算机最大的问题是 cpu性能提升了，但内存读写速度没有跟上，所以为了适应当下的情况，增加了cpu的L1，L2，L3级的缓存<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/2.png" srcset="/img/loading.gif" lazyload class=""></li>
+</ol>
+<h3 id="2-缓存模型"><a href="#2-缓存模型" class="headerlink" title="2. 缓存模型"></a>2. 缓存模型</h3><h4 id="2-1-查询、添加缓存"><a href="#2-1-查询、添加缓存" class="headerlink" title="2.1. 查询、添加缓存"></a>2.1. 查询、添加缓存</h4><p>一般情况下，在查询数据库之前，先查询缓存，如果缓存数据存在，就直接返回缓存数据，如果不存在，查询数据库，并将数据存入redis，具体的模型如下：</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/3.png" srcset="/img/loading.gif" lazyload class="">
+<h4 id="2-2-缓存淘汰"><a href="#2-2-缓存淘汰" class="headerlink" title="2.2. 缓存淘汰"></a>2.2. 缓存淘汰</h4><p>内存的空间是有限的，当我们向redis存储太多数据时，redis会对部分数据进行淘汰，淘汰数据的场景有：</p>
+<ol>
+<li>内存淘汰：Redis自动进行，当redis内存达到设定的max-memery时，会自动触发淘汰机制，淘汰掉一些不重要的数据。</li>
+<li>超时剔除：当对redis设置了过期时间TTL时，Redis会将超时的数据进行删除。</li>
+<li>主动更新：通过手动调用方法把缓存删除掉，常用于解决缓存与数据库不一致的问题。<br>Redis自动进行内存淘汰时，主要有6+2种数据淘汰机制，可以分为以下三大类：</li>
+<li>不淘汰数据<br>● noeviction ，不进行数据淘汰，当缓存被写满后，Redis不提供服务直接返回错误。</li>
+<li>在设置过期时间的键值对中，<br>● volatile-random ，在设置过期时间的键值对中随机删除<br>● volatile-ttl ，在设置过期时间的键值对，基于过期时间的先后进行删除，越早过期的越先被删除。<br>● volatile-lru ， 基于LRU(Least Recently Used) 算法筛选设置了过期时间的键值对， 最近最少使用的原则来筛选数据<br>● volatile-lfu ，使用 LFU( Least Frequently Used ) 算法选择设置了过期时间的键值对, 使用频率最少的键值对,来筛选数据。</li>
+<li>在所有键值对中<br>● allkeys-random， 从所有键值对中随机选择并删除数据<br>● allkeys-lru， 使用 LRU 算法在所有数据中进行筛选<br>● allkeys-lfu， 使用 LFU 算法在所有数据中进行筛选<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/4.png" srcset="/img/loading.gif" lazyload class=""></li>
+</ol>
+<h4 id="2-3-数据库缓存不一致解决方案"><a href="#2-3-数据库缓存不一致解决方案" class="headerlink" title="2.3. 数据库缓存不一致解决方案"></a>2.3. 数据库缓存不一致解决方案</h4><p>因为我们的缓存数据来自于数据库，而数据库的数据会随业务的需要而发生变化，当数据库中的数据变化，而缓存没有同步该数据，此时便会产生一致性问题。具体的解决策略有：</p>
+<ol>
+<li>Cache Aside Pattern（旁路缓存）</li>
+<li>Read&#x2F;Write-Through Pattern（读写穿透）</li>
+<li>Write Behind Pattern（异步缓存写入）</li>
+</ol>
+<h5 id="2-3-1-Cache-Aside-Pattern（旁路缓存模式）"><a href="#2-3-1-Cache-Aside-Pattern（旁路缓存模式）" class="headerlink" title="2.3.1. Cache Aside Pattern（旁路缓存模式）"></a>2.3.1. Cache Aside Pattern（旁路缓存模式）</h5><p>该模式是平时使用比较多的一个缓存读写模式，比较适合读请求比较多的场景，在该模式中，需要同时维系db和cache，并且以db的结果为准。</p>
+<h6 id="2-3-1-1-写"><a href="#2-3-1-1-写" class="headerlink" title="2.3.1.1. 写"></a>2.3.1.1. 写</h6><p>先更新db，然后再直接删除cache</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/5.png" srcset="/img/loading.gif" lazyload class="">
+<p>注意，不能先删除cache，在写db，因为在并发的情况下，可能存在，请求1删除缓存，然后写db，并且写db操作还没结束，这时请求2获取缓存，此时因为缓存被删除了，因此会从数据库读数据， 并存入缓存，这个时候的数据是未更新的，当请求2结束后，请求1写db结束，此时就会造成数据库和缓存中的数据不一致。</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/6.png" srcset="/img/loading.gif" lazyload class="">
+<p>旁路缓存理论上来说，也会造成数据库和缓存不一致的问题，比如：请求 1 先写数据 A，请求 2 随后读数据 A 的话，就很有可能产生数据不一致性的问题。<br>这个过程可以简单描述为：</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/7.png" srcset="/img/loading.gif" lazyload class="">
+<p>但这种概率很小，因为缓存的写入速度比数据库的写入速度快很多。</p>
+<h6 id="2-3-1-2-读"><a href="#2-3-1-2-读" class="headerlink" title="2.3.1.2. 读"></a>2.3.1.2. 读</h6><p>从cache中读取数据，读取到就直接返回。如果读取不到，从db中读取数据返回，然后再把数据放到cache中。</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/8.png" srcset="/img/loading.gif" lazyload class="">
+<h6 id="2-3-1-3-Cache-Aside-Pattern的缺陷"><a href="#2-3-1-3-Cache-Aside-Pattern的缺陷" class="headerlink" title="2.3.1.3. Cache Aside Pattern的缺陷"></a>2.3.1.3. Cache Aside Pattern的缺陷</h6><ol>
+<li>首次请求数据一定不在cache：这种情况可以先将热点数据提前放入cache中。</li>
+<li>写操作比较频繁，会导致cache的数据被频繁删除，影响缓存命中率：更新db的时候同时更新cache，但是给缓存设置一个比较短的过期时间，保证即使数据不一致的话，影响也比较小。</li>
+</ol>
+<h5 id="2-3-2-Read-Write-Through-Pattern（读写穿透）"><a href="#2-3-2-Read-Write-Through-Pattern（读写穿透）" class="headerlink" title="2.3.2. Read&#x2F;Write Through Pattern（读写穿透）"></a>2.3.2. Read&#x2F;Write Through Pattern（读写穿透）</h5><p>服务端把 cache 视为主要数据存储，从中读取数据并将数据写入其中。cache 服务负责将此数据读取和写入 db，从而减轻了应用程序的职责。这种策略比较少使用，因为Redis并没有提供cache将数据写入db的功能。</p>
+<h6 id="2-3-2-1-写（Write-Through）"><a href="#2-3-2-1-写（Write-Through）" class="headerlink" title="2.3.2.1. 写（Write Through）"></a>2.3.2.1. 写（Write Through）</h6><p>● 先查 cache，cache 中不存在，直接更新 db。<br>● cache 中存在，则先更新 cache，然后 cache 服务自己更新 db（同步更新 cache 和 db）。</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/9.png" srcset="/img/loading.gif" lazyload class="">
+<h6 id="2-3-2-2-读（Read-Through）"><a href="#2-3-2-2-读（Read-Through）" class="headerlink" title="2.3.2.2. 读（Read Through）"></a>2.3.2.2. 读（Read Through）</h6><p>● 从 cache 中读取数据，读取到就直接返回 。<br>● 读取不到的话，先从 db 加载，写入到 cache 后返回响应。</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/10.png" srcset="/img/loading.gif" lazyload class="">
+<h6 id="2-3-2-3-缺陷"><a href="#2-3-2-3-缺陷" class="headerlink" title="2.3.2.3. 缺陷"></a>2.3.2.3. 缺陷</h6><ol>
+<li>实现困难，如Redis并没有提供cache将数据写入db的功能</li>
+<li>和Cache Aside Pattern一样，首次请求数据一定不在cache中</li>
+</ol>
+<h5 id="2-3-3-Write-Behind-Pattern（异步缓存写入）"><a href="#2-3-3-Write-Behind-Pattern（异步缓存写入）" class="headerlink" title="2.3.3. Write Behind Pattern（异步缓存写入）"></a>2.3.3. Write Behind Pattern（异步缓存写入）</h5><p>与Read&#x2F;Write Through Pattern相似，都是由cache服务来负责cache和db的读写，但是，Read&#x2F;Write Through是同步更新cache和db，而Write Behind是只更新缓存，不直接更新db，改为异步批量的方式，更新db。<br>这种方式对数据一致性带来了更大的挑战，比如 cache 数据可能还没异步更新 db 的话，cache 服务可能就就挂掉了。这种策略在我们平时开发过程中也非常非常少见，但是不代表它的应用场景少，比如消息队列中消息的异步写入磁盘、MySQL 的 Innodb Buffer Pool 机制都用到了这种策略。<br>Write Behind Pattern 下 db 的写性能非常高，非常适合一些数据经常变化又对数据一致性要求没那么高的场景，比如浏览量、点赞量。</p>
+<h3 id="3-缓存常见的问题"><a href="#3-缓存常见的问题" class="headerlink" title="3. 缓存常见的问题"></a>3. 缓存常见的问题</h3><h4 id="3-1-缓存雪崩"><a href="#3-1-缓存雪崩" class="headerlink" title="3.1. 缓存雪崩"></a>3.1. 缓存雪崩</h4><p>缓存雪崩，指缓存在同一时间大面积的生效（比如缓存数据过期），导致大量的请求都直接落到数据库上，给数据库造成了巨大的压力。此外，如果缓存服务器宕机也会导致缓存雪崩现象，导致所有的请求都落到了数据库上。</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/11.png" srcset="/img/loading.gif" lazyload class="">
+<p>解决方法有：</p>
+<ol>
+<li>采用Redis集群，避免单机出现问题导致整个缓存服务器无法使用。</li>
+<li>限流，避免同时处理大量请求。</li>
+<li>多级缓存，比如本地缓存+Redis缓存的组合，当Redis缓存出现问题时，可以从本地缓存中获取部分数据。</li>
+<li>设置不同的生效时间比如随机设置缓存的失效时间。</li>
+<li>缓存永不生效。</li>
+<li>缓存预热，在程序启动后或运行过程中，主动将热点数据加载到缓存中。</li>
+</ol>
+<h4 id="3-2-缓存穿透"><a href="#3-2-缓存穿透" class="headerlink" title="3.2. 缓存穿透"></a>3.2. 缓存穿透</h4><p>缓存穿透指大量请求的key是不合理的，根本不存在与缓存和数据库中，这就导致这些请求直接到了数据库，给数据库造成巨大压力。比如黑客故意制造一些非法的key发起大量请求，导致大量请求落到数据库，结果数据库上也没有查到对应的数据。</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/12.png" srcset="/img/loading.gif" lazyload class="">
+<p>解决方法：</p>
+<ol>
+<li>参数校验：对不合法的参数请求，直接抛出异常信息给客户端，比如查询的数据库id不能为0，手机格式不正确等。</li>
+<li>缓存无效key：将这些无效的key设置到缓存中，并设置一个较短的过期时间。这种方法可以解决请求的key变化不频繁的情况。</li>
+<li>接口限流。</li>
+<li>布隆过滤器：通过布隆过滤器判断一个给定数据是否存在于海量数据中。具体做法是：把所有可能存在的请求的值都存放在布隆过滤器中，当用户请求过来，先判断用户发来的请求的值是否存在于布隆过滤器中。不存在的话，直接返回请求参数错误信息给客户端，存在的话才会走下面的流程。<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/13.png" srcset="/img/loading.gif" lazyload class=""></li>
+</ol>
+<h4 id="3-3-缓存击穿"><a href="#3-3-缓存击穿" class="headerlink" title="3.3. 缓存击穿"></a>3.3. 缓存击穿</h4><p>缓存击穿，指请求的key对应的是热点数据，该数据存在于数据库中，但是不存在于缓存中（通常是因为缓存中的数据已经过期），这就会导致瞬时大量请求直接打到了数据库上，对数据库造成巨大压力。比如秒杀进行过程中，缓存中的某个秒杀商品数据过期，导致瞬时大量对该商品的请求直接落到数据库上，对数据库造成巨大压力。</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/14.png" srcset="/img/loading.gif" lazyload class="">
+<p>解决方法：</p>
+<ol>
+<li>设置热点数据永不过期或过期时间较长。</li>
+<li>针对热点数据提取预热，将其存入缓存中并设置合理的过期时间。</li>
+<li>请求数据库写数据到缓存之前，先获取互斥锁，保证只有一个请求会落到数据库上，减少数据库的压力。</li>
+</ol>
+<h3 id="4-SpringBoot整合Redis实现缓存"><a href="#4-SpringBoot整合Redis实现缓存" class="headerlink" title="4. SpringBoot整合Redis实现缓存"></a>4. SpringBoot整合Redis实现缓存</h3><h4 id="4-1-准备数据库数据"><a href="#4-1-准备数据库数据" class="headerlink" title="4.1. 准备数据库数据"></a>4.1. 准备数据库数据</h4><p>首先我们创建一个t_user表，并插入几条数据，用于后续的查询：</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/15.png" srcset="/img/loading.gif" lazyload class="">
+<h4 id="4-2-读缓存"><a href="#4-2-读缓存" class="headerlink" title="4.2. 读缓存"></a>4.2. 读缓存</h4><p>创建User类和对应的UserMapper</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@TableName(value = &quot;t_user&quot;)</span><br><span class="hljs-meta">@Data</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">User</span> <span class="hljs-keyword">implements</span> <span class="hljs-title class_">Serializable</span> &#123;<br>    <span class="hljs-meta">@TableId(type = IdType.AUTO)</span><br>    <span class="hljs-keyword">private</span> Integer id;<br><br>    <span class="hljs-keyword">private</span> String username;<br><br>    <span class="hljs-keyword">private</span> String password;<br>&#125;<br><br><span class="hljs-meta">@Mapper</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">interface</span> <span class="hljs-title class_">UserMapper</span> <span class="hljs-keyword">extends</span> <span class="hljs-title class_">BaseMapper</span>&lt;User&gt; &#123;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>UserService</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Service</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">UserService</span> &#123;<br>    <span class="hljs-comment">// 过期时间</span><br>    <span class="hljs-keyword">private</span> <span class="hljs-type">long</span> <span class="hljs-variable">ttl</span> <span class="hljs-operator">=</span> <span class="hljs-number">100L</span>;<br><br>    <span class="hljs-meta">@Autowired</span><br>    <span class="hljs-keyword">private</span> UserMapper userMapper;<br><br>    <span class="hljs-meta">@Autowired</span><br>    <span class="hljs-keyword">private</span> RedisUtils redisUtils;<br><br>    <span class="hljs-keyword">public</span> User <span class="hljs-title function_">getUserById</span><span class="hljs-params">(Integer id)</span> &#123;<br>        <span class="hljs-type">String</span> <span class="hljs-variable">key</span> <span class="hljs-operator">=</span> <span class="hljs-string">&quot;user:&quot;</span> + id;<br>        <span class="hljs-type">Object</span> <span class="hljs-variable">value</span> <span class="hljs-operator">=</span> redisUtils.getKey(key);<br>        <span class="hljs-keyword">if</span> (value != <span class="hljs-literal">null</span>) &#123;<br>            <span class="hljs-comment">// 缓存中存在该数据</span><br>            <span class="hljs-keyword">return</span> (User) value;<br>        &#125;<br><br>        <span class="hljs-comment">// 缓存中不存在该数据, 从数据库中查询</span><br>        <span class="hljs-type">User</span> <span class="hljs-variable">userFromDB</span> <span class="hljs-operator">=</span> getUserFromDB(id);<br>        <span class="hljs-keyword">if</span> (userFromDB == <span class="hljs-literal">null</span>) &#123;<br>            <span class="hljs-keyword">return</span> <span class="hljs-literal">null</span>;<br>        &#125;<br>        redisUtils.addKey(key, userFromDB, ttl);<br>        <span class="hljs-keyword">return</span> userFromDB;<br>    &#125;<br><br>    <span class="hljs-keyword">private</span> User <span class="hljs-title function_">getUserFromDB</span><span class="hljs-params">(Integer id)</span> &#123;<br>        System.out.println(<span class="hljs-string">&quot;从数据库中查询====================&quot;</span>);<br>        <span class="hljs-keyword">return</span> userMapper.selectById(id);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>添加一个测试方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">package</span> org.example;<br><br><span class="hljs-keyword">import</span> org.example.pojo.User;<br><span class="hljs-keyword">import</span> org.example.service.UserService;<br><span class="hljs-keyword">import</span> org.junit.jupiter.api.Test;<br><span class="hljs-keyword">import</span> org.springframework.beans.factory.annotation.Autowired;<br><span class="hljs-keyword">import</span> org.springframework.boot.test.context.SpringBootTest;<br><br><span class="hljs-meta">@SpringBootTest</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">RedisCacheTest</span> &#123;<br>    <span class="hljs-meta">@Autowired</span><br>    <span class="hljs-keyword">private</span> UserService userService;<br><br>    <span class="hljs-meta">@Test</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">testGetUserById</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-type">User</span> <span class="hljs-variable">userById</span> <span class="hljs-operator">=</span> userService.getUserById(<span class="hljs-number">1</span>);<br>        System.out.println(userById);<br><br>        userById = userService.getUserById(<span class="hljs-number">1</span>);<br>        System.out.println(userById);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>执行测试方法，结果如下：</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/16.png" srcset="/img/loading.gif" lazyload class="">
+<p>从上述内容中，可以看出，第一次查询时，因为数据不存在于缓存中，所以会查询数据库，第二次查询时，从缓存中查询到数据，直接返回。<br>但是这里涉及到一个序列化的问题，我们通过下载一些redis桌面可视化工具，查看这些数据，发现这些key和value都有一些奇怪的编码，如下图所示：</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/17.png" srcset="/img/loading.gif" lazyload class="">
+<p>这是因为，默认情况下，redisTemplate使用JDK的序列化器(JdkSerializationRedisSerializer)对存储的对象进行序列哈和反序列化操作，这可能导致序列化结果不可读或占用较多的存储空间。因此，我们需要在配置redisTemplate的时候，设置对应的序列化器，我们修改上一章的RedisConfiguration类，修改结果如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">package</span> org.example.config;<br><br><span class="hljs-keyword">import</span> com.fasterxml.jackson.databind.ObjectMapper;<br><span class="hljs-keyword">import</span> org.springframework.context.annotation.Bean;<br><span class="hljs-keyword">import</span> org.springframework.context.annotation.Configuration;<br><span class="hljs-keyword">import</span> org.springframework.data.redis.connection.RedisConnectionFactory;<br><span class="hljs-keyword">import</span> org.springframework.data.redis.core.RedisTemplate;<br><span class="hljs-keyword">import</span> org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;<br><span class="hljs-keyword">import</span> org.springframework.data.redis.serializer.StringRedisSerializer;<br><br><span class="hljs-meta">@Configuration</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">RedisConfiguration</span> &#123;<br>    <span class="hljs-meta">@Bean</span><br>    <span class="hljs-keyword">public</span> RedisTemplate&lt;String, Object&gt; <span class="hljs-title function_">redisTemplate</span><span class="hljs-params">(RedisConnectionFactory redisConnectionFactory)</span> &#123;<br>        RedisTemplate&lt;String, Object&gt; redisTemplate = <span class="hljs-keyword">new</span> <span class="hljs-title class_">RedisTemplate</span>&lt;&gt;();<br>        redisTemplate.setConnectionFactory(redisConnectionFactory);<br><br>        <span class="hljs-type">StringRedisSerializer</span> <span class="hljs-variable">stringRedisSerializer</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">StringRedisSerializer</span>();<br>        <span class="hljs-type">Jackson2JsonRedisSerializer</span> <span class="hljs-variable">jackson2JsonRedisSerializer</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Jackson2JsonRedisSerializer</span>(Object.class);<br>        <span class="hljs-type">ObjectMapper</span> <span class="hljs-variable">objectMapper</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">ObjectMapper</span>().enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);<br>        jackson2JsonRedisSerializer.setObjectMapper(objectMapper);<br><br>        <span class="hljs-comment">// 设置key的序列化器为StringRedisSerializer</span><br>        redisTemplate.setKeySerializer(stringRedisSerializer);<br>        <span class="hljs-comment">// 设置value的序列化器为Jackson2JsonRedisSerializer</span><br>        redisTemplate.setValueSerializer(jackson2JsonRedisSerializer);<br><br>        <span class="hljs-comment">// 设置hash key的序列化器为StringRedisSerializer</span><br>        redisTemplate.setHashKeySerializer(stringRedisSerializer);<br>        <span class="hljs-comment">// 设置hash value的序列化器为Jackson2JsonRedisSerializer</span><br>        redisTemplate.setHashValueSerializer(jackson2JsonRedisSerializer);<br><br>        <span class="hljs-comment">// 完成其他配置后，初始化RedisTemplate</span><br>        redisTemplate.afterPropertiesSet();<br>        <span class="hljs-keyword">return</span> redisTemplate;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>我们将之前那些key全部删除掉，然后重新运行测试代码，结果如下：</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/18.png" srcset="/img/loading.gif" lazyload class="">
+<p>通过redis可视化工具，也能清楚地看到每个key和value的结构和信息。</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/19.png" srcset="/img/loading.gif" lazyload class="">
+<p>上面的代码，存在一些问题，当请求1查询id&#x3D;1的用户，从缓存中查询不到时，会查询数据库，然后将数据更新到数据库，然后请求2查询id&#x3D;1的用户，从缓存中查询到，便直接返回，这是理想的情况。但是，可能请求1查询数据库还没执行完，请求2过来了，此时缓存中没有id&#x3D;1的用户，因此请求2也会去查询数据库。<br>比如我们修改getUserFromDB，加上Thread.sleep(2000)，模拟数据库的查询较慢，然后修改测试代码，模拟多个请求同时查询id&#x3D;1的用户的情况：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Test</span><br> <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">testGetUserById</span><span class="hljs-params">()</span> <span class="hljs-keyword">throws</span> ExecutionException, InterruptedException &#123;<br>     <span class="hljs-type">ExecutorService</span> <span class="hljs-variable">executorService</span> <span class="hljs-operator">=</span> Executors.newFixedThreadPool(<span class="hljs-number">2</span>);<br>     Callable&lt;User&gt; getUserTask = () -&gt; userService.getUserById(<span class="hljs-number">1</span>);<br><br>     Future&lt;User&gt; submit1 = executorService.submit(getUserTask);<br>     Future&lt;User&gt; submit2 = executorService.submit(getUserTask);<br>     System.out.println(submit1.get());<br>     System.out.println(submit2.get());<br> &#125;<br></code></pre></td></tr></table></figure>
+<p>此时再次执行测试代码，结果如下：</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/20.png" srcset="/img/loading.gif" lazyload class="">
+<p>解决上面的情况，方式就是加锁，我们修改UserService的代码如下,这里通过synchronized加锁，然后锁的对象使用key，这样可以将锁的粒度缩小一点。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> User <span class="hljs-title function_">getUserById</span><span class="hljs-params">(Integer id)</span> &#123;<br>       <span class="hljs-type">String</span> <span class="hljs-variable">key</span> <span class="hljs-operator">=</span> <span class="hljs-string">&quot;user:&quot;</span> + id;<br>       <span class="hljs-type">Object</span> <span class="hljs-variable">value</span> <span class="hljs-operator">=</span> redisUtils.getKey(key);<br>       <span class="hljs-keyword">if</span> (value != <span class="hljs-literal">null</span>) &#123;<br>           <span class="hljs-comment">// 缓存中存在该数据</span><br>           <span class="hljs-keyword">return</span> (User) value;<br>       &#125;<br><br>       <span class="hljs-type">User</span> <span class="hljs-variable">userFromDB</span> <span class="hljs-operator">=</span> <span class="hljs-literal">null</span>;<br>       <span class="hljs-keyword">synchronized</span> (key.intern()) &#123;<br>           <span class="hljs-comment">// 再次查询缓存</span><br>           value = redisUtils.getKey(key);<br>           <span class="hljs-keyword">if</span> (value != <span class="hljs-literal">null</span>) &#123;<br>               <span class="hljs-keyword">return</span> (User) value;<br>           &#125;<br><br>           <span class="hljs-comment">// 缓存中不存在该数据, 从数据库中查询</span><br>           userFromDB = getUserFromDB(id);<br>           <span class="hljs-keyword">if</span> (userFromDB == <span class="hljs-literal">null</span>) &#123;<br>               <span class="hljs-keyword">return</span> <span class="hljs-literal">null</span>;<br>           &#125;<br>           redisUtils.addKey(key, userFromDB, ttl);<br>       &#125;<br>       <span class="hljs-keyword">return</span> userFromDB;<br>   &#125;<br><br>   <span class="hljs-keyword">private</span> User <span class="hljs-title function_">getUserFromDB</span><span class="hljs-params">(Integer id)</span> &#123;<br>       <span class="hljs-keyword">try</span> &#123;<br>           Thread.sleep(<span class="hljs-number">2000</span>);<br>       &#125; <span class="hljs-keyword">catch</span> (Exception e) &#123;<br>           e.printStackTrace();<br>       &#125;<br>       System.out.println(<span class="hljs-string">&quot;从数据库中查询====================&quot;</span>);<br>       <span class="hljs-keyword">return</span> userMapper.selectById(id);<br>   &#125;<br></code></pre></td></tr></table></figure>
+<p>重新运行测试方法，结果如下：</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/21.png" srcset="/img/loading.gif" lazyload class="">
+<p>通过加锁，可以解决被访问多次的情况，但是这样的锁有一个问题，这个锁，只适用于单机的情况，当我们的服务部署在多台服务器上时，这些服务器上的应用，对应的JVM都不同，因此锁住的，不是同一个对象，后续会单独对分布式锁进行讲解，这里先不予讨论。</p>
+<h4 id="4-3-更新缓存"><a href="#4-3-更新缓存" class="headerlink" title="4.3. 更新缓存"></a>4.3. 更新缓存</h4><p>修改userService，添加修改用户的方法</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">updateUser</span><span class="hljs-params">(UpdateUserRequest updateUserRequest)</span> &#123;<br>       <span class="hljs-keyword">if</span> (updateUserRequest.getId() == <span class="hljs-literal">null</span>) &#123;<br>           <span class="hljs-keyword">return</span>;<br>       &#125;<br>       <span class="hljs-type">User</span> <span class="hljs-variable">user</span> <span class="hljs-operator">=</span> getUserById(updateUserRequest.getId());<br>       <span class="hljs-keyword">if</span> (user == <span class="hljs-literal">null</span>) &#123;<br>           <span class="hljs-keyword">return</span>;<br>       &#125;<br>       <span class="hljs-keyword">if</span> (StringUtils.isNotEmpty(updateUserRequest.getUsername())) &#123;<br>           user.setUsername(updateUserRequest.getUsername());<br>       &#125;<br>       <span class="hljs-keyword">if</span> (StringUtils.isNotEmpty(updateUserRequest.getPassword())) &#123;<br>           user.setPassword(updateUserRequest.getPassword());<br>       &#125;<br>       <span class="hljs-comment">// 先更新数据库</span><br>       <span class="hljs-type">int</span> <span class="hljs-variable">updateResult</span> <span class="hljs-operator">=</span> userMapper.updateById(user);<br>       <span class="hljs-keyword">if</span> (updateResult == <span class="hljs-number">1</span>) &#123;<br>           <span class="hljs-comment">// 更新成功，删除缓存</span><br>           redisUtils.removeKey(<span class="hljs-string">&quot;user:&quot;</span> + updateUserRequest.getId());<br>       &#125;<br>   &#125;<br></code></pre></td></tr></table></figure>
+<p>添加测试方法</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Test</span><br>   <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">testUpdateUser</span><span class="hljs-params">()</span> &#123;<br>       <span class="hljs-type">UpdateUserRequest</span> <span class="hljs-variable">updateUserRequest</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">UpdateUserRequest</span>();<br>       updateUserRequest.setId(<span class="hljs-number">1</span>);<br>       updateUserRequest.setPassword(<span class="hljs-string">&quot;12345&quot;</span>);<br>       userService.updateUser(updateUserRequest);<br><br>       <span class="hljs-type">User</span> <span class="hljs-variable">userById</span> <span class="hljs-operator">=</span> userService.getUserById(<span class="hljs-number">1</span>);<br>       System.out.println(userById);<br>   &#125;<br></code></pre></td></tr></table></figure>
+<p>测试结果如下</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/22.png" srcset="/img/loading.gif" lazyload class="">
+<h3 id="5-SpringBoot整合SpringCache-Redis"><a href="#5-SpringBoot整合SpringCache-Redis" class="headerlink" title="5. SpringBoot整合SpringCache+Redis"></a>5. SpringBoot整合SpringCache+Redis</h3><p>在上面的代码中，我们发现，和Redis查询的操作，和我们的业务代码糅合在一起， 不方便进行处理，如果后续我们缓存服务器从Redis改为其他缓存服务器，需要修改多处代码，不利于项目的扩展和维护。<br>SpringCache框架是Spring框架提供的一套基于注解的缓存解决方案，在应用程序中简化了缓存操作的管理和使用。它通过在方法上添加缓存注解，来实现自动缓存的功能，其常用注解有：<br>1）@Cacheable: 表示该方法返回结果可以被缓存，当方法被调用时，先检查缓存，如果缓存命中，直接返回缓存中的结果，不再执行方法体中的逻辑。<br>2） @CachePut：表示该方法的返回结果需要更新缓存，每次方法被调用后，都会将返回结果更新到缓存中。<br>3）@CacheEvit：表示该方法会清除缓存中的数据，可以用于在更新或删除数据时清除相应的缓存。</p>
+<h4 id="5-1-整合SpringCache"><a href="#5-1-整合SpringCache" class="headerlink" title="5.1. 整合SpringCache"></a>5.1. 整合SpringCache</h4><p>添加Spring Cache的依赖</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs xml"><span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>	<span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.springframework.boot<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>	<span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>spring-boot-starter-cache<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br><span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br></code></pre></td></tr></table></figure>
+<p>在启动类上加上注解开启缓存</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@SpringBootApplication</span><br><span class="hljs-meta">@EnableCaching</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">RedisApp</span> &#123;<br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span> &#123;<br>        SpringApplication.run(RedisApp.class, args);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<h4 id="5-2-测试Cacheable和CacheEvict"><a href="#5-2-测试Cacheable和CacheEvict" class="headerlink" title="5.2. 测试Cacheable和CacheEvict"></a>5.2. 测试Cacheable和CacheEvict</h4><p>我们在userService类上，加上两个方法，用于测试Cacheable和CacheEvit注解。<br>添加getUserById2方法，该方法中的逻辑为查询数据库操作</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Cacheable(value = &quot;user&quot;, key = &quot;#id&quot;)</span><br>  <span class="hljs-keyword">public</span> User <span class="hljs-title function_">getUserById2</span><span class="hljs-params">(Integer id)</span> &#123;<br>      System.out.println(<span class="hljs-string">&quot;从数据库中查询==============&quot;</span>);<br>      <span class="hljs-keyword">return</span> userMapper.selectById(id);<br>  &#125;<br></code></pre></td></tr></table></figure>
+<p>然后添加一个测试方法</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Autowired</span><br>   <span class="hljs-keyword">private</span> UserService userService;<br><br>   <span class="hljs-meta">@Test</span><br>   <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">testGetUserById</span><span class="hljs-params">()</span> &#123;<br>       System.out.println(userService.getUserById2(<span class="hljs-number">1</span>));<br>       System.out.println(userService.getUserById2(<span class="hljs-number">1</span>));<br>   &#125;<br></code></pre></td></tr></table></figure>
+<p>测试结果如下，第一次查询时，查询数据库，第二次直接查询缓存。</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/23.png" srcset="/img/loading.gif" lazyload class="">
+<p>然后我们查看reids缓存，发现这个key的值是user::1，这个和我们之前定义的不太相同，而且没有过期时间，除此之外，这个value的值，序列化有问题</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/24.png" srcset="/img/loading.gif" lazyload class="">
+<p>我们修改RedisConfiguration，添加RedisCacheConfiguration的相关配置</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">package</span> org.example.config;<br><br><span class="hljs-keyword">import</span> com.fasterxml.jackson.databind.ObjectMapper;<br><span class="hljs-keyword">import</span> org.springframework.context.annotation.Bean;<br><span class="hljs-keyword">import</span> org.springframework.context.annotation.Configuration;<br><span class="hljs-keyword">import</span> org.springframework.data.redis.cache.RedisCacheConfiguration;<br><span class="hljs-keyword">import</span> org.springframework.data.redis.connection.RedisConnectionFactory;<br><span class="hljs-keyword">import</span> org.springframework.data.redis.core.RedisTemplate;<br><span class="hljs-keyword">import</span> org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;<br><span class="hljs-keyword">import</span> org.springframework.data.redis.serializer.RedisSerializationContext;<br><span class="hljs-keyword">import</span> org.springframework.data.redis.serializer.StringRedisSerializer;<br><br><span class="hljs-keyword">import</span> java.time.Duration;<br><br><span class="hljs-meta">@Configuration</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">RedisConfiguration</span> &#123;<br>    <span class="hljs-meta">@Bean</span><br>    <span class="hljs-keyword">public</span> RedisTemplate&lt;String, Object&gt; <span class="hljs-title function_">redisTemplate</span><span class="hljs-params">(RedisConnectionFactory redisConnectionFactory)</span> &#123;<br>        RedisTemplate&lt;String, Object&gt; redisTemplate = <span class="hljs-keyword">new</span> <span class="hljs-title class_">RedisTemplate</span>&lt;&gt;();<br>        redisTemplate.setConnectionFactory(redisConnectionFactory);<br><br>        <span class="hljs-type">StringRedisSerializer</span> <span class="hljs-variable">stringRedisSerializer</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">StringRedisSerializer</span>();<br>        <span class="hljs-type">Jackson2JsonRedisSerializer</span> <span class="hljs-variable">jackson2JsonRedisSerializer</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Jackson2JsonRedisSerializer</span>(Object.class);<br>        <span class="hljs-type">ObjectMapper</span> <span class="hljs-variable">objectMapper</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">ObjectMapper</span>().enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);<br>        jackson2JsonRedisSerializer.setObjectMapper(objectMapper);<br><br>        <span class="hljs-comment">// 设置key的序列化器为StringRedisSerializer</span><br>        redisTemplate.setKeySerializer(stringRedisSerializer);<br>        <span class="hljs-comment">// 设置value的序列化器为Jackson2JsonRedisSerializer</span><br>        redisTemplate.setValueSerializer(jackson2JsonRedisSerializer);<br><br>        <span class="hljs-comment">// 设置hash key的序列化器为StringRedisSerializer</span><br>        redisTemplate.setHashKeySerializer(stringRedisSerializer);<br>        <span class="hljs-comment">// 设置hash value的序列化器为Jackson2JsonRedisSerializer</span><br>        redisTemplate.setHashValueSerializer(jackson2JsonRedisSerializer);<br><br>        <span class="hljs-comment">// 完成其他配置后，初始化RedisTemplate</span><br>        redisTemplate.afterPropertiesSet();<br>        <span class="hljs-keyword">return</span> redisTemplate;<br>    &#125;<br><br>    <span class="hljs-meta">@Bean</span><br>    <span class="hljs-keyword">public</span> RedisCacheConfiguration <span class="hljs-title function_">redisCacheConfiguration</span><span class="hljs-params">()</span>&#123;<br>        <span class="hljs-type">Jackson2JsonRedisSerializer</span> <span class="hljs-variable">jackson2JsonRedisSerializer</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Jackson2JsonRedisSerializer</span>(Object.class);<br>        <span class="hljs-type">ObjectMapper</span> <span class="hljs-variable">objectMapper</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">ObjectMapper</span>().enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);<br>        jackson2JsonRedisSerializer.setObjectMapper(objectMapper);<br><br>        <span class="hljs-comment">//相当于new了一个RedisCacheConfiguration</span><br>        <span class="hljs-type">RedisCacheConfiguration</span>  <span class="hljs-variable">configuration</span> <span class="hljs-operator">=</span> RedisCacheConfiguration.defaultCacheConfig();<br>        configuration = configuration.serializeValuesWith<br>                <span class="hljs-comment">// 指定value序列化器</span><br>                        (RedisSerializationContext.SerializationPair.fromSerializer(jackson2JsonRedisSerializer))<br>                <span class="hljs-comment">// 指定 key的TTL</span><br>                .entryTtl(Duration.ofSeconds(<span class="hljs-number">100</span>))<br>                <span class="hljs-comment">// 指定前缀</span><br>                .prefixCacheNameWith(<span class="hljs-string">&quot;user::&quot;</span>);<br>        <span class="hljs-keyword">return</span> configuration;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>删除原先的缓存，然后重新运行测试代码，然后查看缓存信息，结果如下：</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/25.png" srcset="/img/loading.gif" lazyload class="">
+<p>此时过期时间和序列化均设置成功。但这样配置还有一些问题，通过这种全局配置，所有cache key的TTL都一样，实际开发中，不同的cache key可能需要的TTL都不同，我们修改RedisConfiguration，为不同的key配置上不同的过期时间</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">package</span> org.example.config;<br><br><span class="hljs-keyword">import</span> com.fasterxml.jackson.databind.ObjectMapper;<br><span class="hljs-keyword">import</span> org.springframework.boot.autoconfigure.cache.RedisCacheManagerBuilderCustomizer;<br><span class="hljs-keyword">import</span> org.springframework.context.annotation.Bean;<br><span class="hljs-keyword">import</span> org.springframework.context.annotation.Configuration;<br><span class="hljs-keyword">import</span> org.springframework.data.redis.cache.RedisCacheConfiguration;<br><span class="hljs-keyword">import</span> org.springframework.data.redis.connection.RedisConnectionFactory;<br><span class="hljs-keyword">import</span> org.springframework.data.redis.core.RedisTemplate;<br><span class="hljs-keyword">import</span> org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;<br><span class="hljs-keyword">import</span> org.springframework.data.redis.serializer.RedisSerializationContext;<br><span class="hljs-keyword">import</span> org.springframework.data.redis.serializer.StringRedisSerializer;<br><br><span class="hljs-keyword">import</span> java.time.Duration;<br><span class="hljs-keyword">import</span> java.util.HashMap;<br><span class="hljs-keyword">import</span> java.util.Map;<br><br><span class="hljs-meta">@Configuration</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">RedisConfiguration</span> &#123;<br>    <span class="hljs-meta">@Bean</span><br>    <span class="hljs-keyword">public</span> RedisTemplate&lt;String, Object&gt; <span class="hljs-title function_">redisTemplate</span><span class="hljs-params">(RedisConnectionFactory redisConnectionFactory)</span> &#123;<br>        RedisTemplate&lt;String, Object&gt; redisTemplate = <span class="hljs-keyword">new</span> <span class="hljs-title class_">RedisTemplate</span>&lt;&gt;();<br>        redisTemplate.setConnectionFactory(redisConnectionFactory);<br><br>        <span class="hljs-type">StringRedisSerializer</span> <span class="hljs-variable">stringRedisSerializer</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">StringRedisSerializer</span>();<br>        <span class="hljs-type">Jackson2JsonRedisSerializer</span> <span class="hljs-variable">jackson2JsonRedisSerializer</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Jackson2JsonRedisSerializer</span>(Object.class);<br>        <span class="hljs-type">ObjectMapper</span> <span class="hljs-variable">objectMapper</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">ObjectMapper</span>().enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);<br>        jackson2JsonRedisSerializer.setObjectMapper(objectMapper);<br><br>        <span class="hljs-comment">// 设置key的序列化器为StringRedisSerializer</span><br>        redisTemplate.setKeySerializer(stringRedisSerializer);<br>        <span class="hljs-comment">// 设置value的序列化器为Jackson2JsonRedisSerializer</span><br>        redisTemplate.setValueSerializer(jackson2JsonRedisSerializer);<br><br>        <span class="hljs-comment">// 设置hash key的序列化器为StringRedisSerializer</span><br>        redisTemplate.setHashKeySerializer(stringRedisSerializer);<br>        <span class="hljs-comment">// 设置hash value的序列化器为Jackson2JsonRedisSerializer</span><br>        redisTemplate.setHashValueSerializer(jackson2JsonRedisSerializer);<br><br>        <span class="hljs-comment">// 完成其他配置后，初始化RedisTemplate</span><br>        redisTemplate.afterPropertiesSet();<br>        <span class="hljs-keyword">return</span> redisTemplate;<br>    &#125;<br><br>    <span class="hljs-meta">@Bean</span><br>    <span class="hljs-keyword">public</span> RedisCacheManagerBuilderCustomizer <span class="hljs-title function_">redisCacheManagerBuilderCustomizer</span><span class="hljs-params">()</span> &#123;<br>        Jackson2JsonRedisSerializer&lt;Object&gt; jackson2JsonRedisSerializer = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Jackson2JsonRedisSerializer</span>&lt;&gt;(Object.class);<br>        <span class="hljs-type">ObjectMapper</span> <span class="hljs-variable">objectMapper</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">ObjectMapper</span>().enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);<br>        jackson2JsonRedisSerializer.setObjectMapper(objectMapper);<br><br>        <span class="hljs-keyword">return</span> (builder) -&gt; &#123;<br>            Map&lt;String, RedisCacheConfiguration&gt; cacheConfigurations = <span class="hljs-keyword">new</span> <span class="hljs-title class_">HashMap</span>&lt;&gt;();<br><br>            cacheConfigurations.put(<span class="hljs-string">&quot;user&quot;</span>,<br>                    RedisCacheConfiguration.defaultCacheConfig()<br>                            .entryTtl(Duration.ofSeconds(<span class="hljs-number">60</span>))<br>                            .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(jackson2JsonRedisSerializer)));<br><br>            cacheConfigurations.put(<span class="hljs-string">&quot;product&quot;</span>,<br>                    RedisCacheConfiguration.defaultCacheConfig()<br>                            .entryTtl(Duration.ofSeconds(<span class="hljs-number">120</span>))<br>                            .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(jackson2JsonRedisSerializer)));<br><br>            builder.withInitialCacheConfigurations(cacheConfigurations);<br>        &#125;;<br>    &#125;<br>    <br>&#125;<br></code></pre></td></tr></table></figure>
+<p>运行结果如下：</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/26.png" srcset="/img/loading.gif" lazyload class="">
+<p>接着，我们测试CacheEvict，首先在userService中添加一个更新方法</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@CacheEvict(value = &quot;user&quot;, key = &quot;#updateUserRequest.id&quot;)</span><br>  <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">updateUser2</span><span class="hljs-params">(UpdateUserRequest updateUserRequest)</span> &#123;<br>      <span class="hljs-keyword">if</span> (updateUserRequest.getId() == <span class="hljs-literal">null</span>) &#123;<br>          <span class="hljs-keyword">return</span>;<br>      &#125;<br>      <span class="hljs-type">User</span> <span class="hljs-variable">user</span> <span class="hljs-operator">=</span> getUserById2(updateUserRequest.getId());<br>      <span class="hljs-keyword">if</span> (user == <span class="hljs-literal">null</span>) &#123;<br>          <span class="hljs-keyword">return</span>;<br>      &#125;<br>      <span class="hljs-keyword">if</span> (StringUtils.isNotEmpty(updateUserRequest.getUsername())) &#123;<br>          user.setUsername(updateUserRequest.getUsername());<br>      &#125;<br>      <span class="hljs-keyword">if</span> (StringUtils.isNotEmpty(updateUserRequest.getPassword())) &#123;<br>          user.setPassword(updateUserRequest.getPassword());<br>      &#125;<br>      <span class="hljs-comment">// 先更新数据库</span><br>      userMapper.updateById(user);<br>  &#125;<br></code></pre></td></tr></table></figure>
+<p>然后添加测试方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Test</span><br>   <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">testUpdateUser</span><span class="hljs-params">()</span> &#123;<br>       <span class="hljs-type">UpdateUserRequest</span> <span class="hljs-variable">updateUserRequest</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">UpdateUserRequest</span>();<br>       updateUserRequest.setId(<span class="hljs-number">1</span>);<br>       updateUserRequest.setPassword(<span class="hljs-string">&quot;123456&quot;</span>);<br>       userService.updateUser2(updateUserRequest);<br>   &#125;<br></code></pre></td></tr></table></figure>
+<p>运行该测试方法，然后去看对应的redis缓存，发现更新成功后，该缓存被删除掉，说明CacheEvict生效</p>
+<img src="/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/27.png" srcset="/img/loading.gif" lazyload class="">
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" class="print-no-link">#中间件</a>
+      
+        <a href="/tags/Redis/" class="print-no-link">#Redis</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Redis学习3—Redis应用之缓存</div>
+      <div>https://cxydhi.github.io/2024/04/02/Redis学习3—Redis应用之缓存/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>沉河不浮</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年4月2日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2024/04/02/Redis%E5%AD%A6%E4%B9%A04%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E9%99%90%E6%B5%81/" title="Redis学习4—Redis应用之限流">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Redis学习4—Redis应用之限流</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/04/02/Redis%E5%AD%A6%E4%B9%A02%E2%80%94SpringBoot%E6%95%B4%E5%90%88Redis%E3%80%81Redis%E5%B7%A5%E5%85%B7%E7%B1%BB/" title="Redis学习2—SpringBoot整合Redis、Redis工具类">
+                        <span class="hidden-mobile">Redis学习2—SpringBoot整合Redis、Redis工具类</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

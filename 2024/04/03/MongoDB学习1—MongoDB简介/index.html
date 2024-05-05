@@ -1,0 +1,774 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="沉河不浮">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="1. MongoDB介绍1.1. 什么是MongoDBMongoDB是由C++语言编写的，是一个基于分布式文件存储的开源数据库系统，旨在为WEB应用提供可扩展的高性能数据存储解决方案。它将数据存储为一个文档，数据结构由键值(key&#x3D;&gt;value）对组成，MongoDB文档类似于JSON对象，字段值可以包含其他文档，数组即文档数组。  1.2. 特点MongoDB具有以下特点：  文">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MongoDB学习1—MongoDB简介">
+<meta property="og:url" content="https://cxydhi.github.io/2024/04/03/MongoDB%E5%AD%A6%E4%B9%A01%E2%80%94MongoDB%E7%AE%80%E4%BB%8B/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="1. MongoDB介绍1.1. 什么是MongoDBMongoDB是由C++语言编写的，是一个基于分布式文件存储的开源数据库系统，旨在为WEB应用提供可扩展的高性能数据存储解决方案。它将数据存储为一个文档，数据结构由键值(key&#x3D;&gt;value）对组成，MongoDB文档类似于JSON对象，字段值可以包含其他文档，数组即文档数组。  1.2. 特点MongoDB具有以下特点：  文">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/MongoDB%E5%AD%A6%E4%B9%A01%E2%80%94MongoDB%E7%AE%80%E4%BB%8B/1.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/MongoDB%E5%AD%A6%E4%B9%A01%E2%80%94MongoDB%E7%AE%80%E4%BB%8B/2.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/04/03/MongoDB%E5%AD%A6%E4%B9%A01%E2%80%94MongoDB%E7%AE%80%E4%BB%8B/3.png">
+<meta property="article:published_time" content="2024-04-03T05:58:36.000Z">
+<meta property="article:modified_time" content="2024-04-03T06:05:06.910Z">
+<meta property="article:author" content="沉河不浮">
+<meta property="article:tag" content="中间件">
+<meta property="article:tag" content="MongoDB">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://cxydhi.github.io/2024/04/03/MongoDB%E5%AD%A6%E4%B9%A01%E2%80%94MongoDB%E7%AE%80%E4%BB%8B/1.png">
+  
+  
+  
+  <title>MongoDB学习1—MongoDB简介 - Hexo</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"cxydhi.github.io","root":"/","version":"1.9.5","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Fluid</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="MongoDB学习1—MongoDB简介"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-04-03 13:58" pubdate>
+          2024年4月3日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          25 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">MongoDB学习1—MongoDB简介</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h3 id="1-MongoDB介绍"><a href="#1-MongoDB介绍" class="headerlink" title="1. MongoDB介绍"></a>1. MongoDB介绍</h3><h4 id="1-1-什么是MongoDB"><a href="#1-1-什么是MongoDB" class="headerlink" title="1.1. 什么是MongoDB"></a>1.1. 什么是MongoDB</h4><p>MongoDB是由C++语言编写的，是一个基于分布式文件存储的开源数据库系统，旨在为WEB应用提供可扩展的高性能数据存储解决方案。它将数据存储为一个文档，数据结构由键值(key&#x3D;&gt;value）对组成，MongoDB文档类似于JSON对象，字段值可以包含其他文档，数组即文档数组。</p>
+<img src="/2024/04/03/MongoDB%E5%AD%A6%E4%B9%A01%E2%80%94MongoDB%E7%AE%80%E4%BB%8B/1.png" srcset="/img/loading.gif" lazyload class="">
+<h4 id="1-2-特点"><a href="#1-2-特点" class="headerlink" title="1.2. 特点"></a>1.2. 特点</h4><p>MongoDB具有以下特点：</p>
+<ol>
+<li>文档导向： MongoDB使用文档导向的数据模型，数据以文档的形式存储，类似于JSON对象。文档是一个键值对的集合，支持嵌套结构和动态模式。</li>
+<li>灵活的模式： MongoDB是一个无模式（Schemaless）数据库，意味着不需要预定义模式和表结构。每个文档可以具有不同的字段和结构，这使得数据模型更加灵活，适用于各种类型的数据。</li>
+<li>分布式存储： MongoDB可以在多个服务器上进行部署，实现数据的分布式存储和横向扩展。它支持副本集（Replica Set）和分片集群（Sharded Cluster），提供高可用性和可伸缩性。</li>
+<li>丰富的查询语言： MongoDB提供了丰富的查询功能，支持灵活的条件查询、范围查询、正则表达式、聚合管道等。它还支持地理空间查询和文本搜索等特殊类型的查询。</li>
+<li>支持事务： MongoDB从版本4.0开始支持事务，可以在单个文档或多个文档上执行原子性的读写操作。事务能够确保数据的一致性和完整性，适用于复杂的数据操作场景。</li>
+</ol>
+<h4 id="1-3-MongoDB的应用"><a href="#1-3-MongoDB的应用" class="headerlink" title="1.3. MongoDB的应用"></a>1.3. MongoDB的应用</h4><p>MongoDB在许多应用场景中具有广泛的应用，以下是一些常见的MongoDB应用场景：</p>
+<ol>
+<li>实时分析和大数据处理： MongoDB适用于实时数据分析和大数据处理场景。它可以存储和处理大量的非结构化或半结构化数据，支持高并发读写操作和复杂的聚合查询。这使得它成为处理实时数据、日志分析和数据挖掘等任务的理想选择。</li>
+<li>内容管理系统（CMS）： MongoDB可以用作内容管理系统的后端数据库。它的灵活的数据模型和无模式特性使得存储和管理各种类型的内容（如文章、页面、多媒体文件等）变得简单。此外，MongoDB的高性能和可扩展性能够满足CMS的需求。</li>
+<li>物联网（IoT）应用： MongoDB适用于物联网应用，用于存储和处理大量的传感器数据和设备数据。它可以轻松地处理大规模的时间序列数据，支持地理空间查询和实时数据分析，使得物联网应用的数据管理和分析更加便捷。</li>
+<li>实时应用和实时通信： MongoDB的低延迟和高吞吐量使其适用于实时应用和实时通信场景。它可以存储和处理实时产生的数据，如聊天消息、实时推送、实时游戏数据等。MongoDB的副本集和分片集群提供了高可用性和可伸缩性，确保实时应用的稳定性和性能。</li>
+<li>目录和目标存储： MongoDB可以用作目录和目标存储，用于存储和管理大量的结构化和非结构化数据。它的灵活的数据模型和强大的查询功能使得存储和检索数据变得更高效和便捷。</li>
+<li>用户数据和个性化推荐： MongoDB可以存储和管理用户数据，如用户配置、偏好设置、历史记录等。它可以用于个性化推荐系统，根据用户的行为和偏好提供个性化的推荐内容。</li>
+</ol>
+<h3 id="2-MongoDB安装和启动"><a href="#2-MongoDB安装和启动" class="headerlink" title="2. MongoDB安装和启动"></a>2. MongoDB安装和启动</h3><p>windows下载地址：<a target="_blank" rel="noopener" href="https://www.mongodb.com/try/download/community">https://www.mongodb.com/try/download/community</a><br>下载完毕后，安装过程中，一路next就可以，如果不想放到C盘，在下面这一步选择想要存放的位置，其余的next就可以了。</p>
+<img src="/2024/04/03/MongoDB%E5%AD%A6%E4%B9%A01%E2%80%94MongoDB%E7%AE%80%E4%BB%8B/2.png" srcset="/img/loading.gif" lazyload class="">
+<p>安装完毕后，在MongoDB目录的bin目录下，执行mongod.exe文件，启动mongodb。<br>启动完毕后，可以访问<a href="http://localhost:27017，出现下面内容，说明启动成功">http://localhost:27017，出现下面内容，说明启动成功</a></p>
+<img src="/2024/04/03/MongoDB%E5%AD%A6%E4%B9%A01%E2%80%94MongoDB%E7%AE%80%E4%BB%8B/3.png" srcset="/img/loading.gif" lazyload class="">
+<h3 id="3-MongoDB概念"><a href="#3-MongoDB概念" class="headerlink" title="3. MongoDB概念"></a>3. MongoDB概念</h3><p>在MongoDB中，基本的概念是文档、集合、数据库，如下表所示：</p>
+<table>
+<thead>
+<tr>
+<th>SQL术语概念</th>
+<th>MongoDB术语概念</th>
+<th>解释</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>database</td>
+<td>database</td>
+<td>数据库</td>
+</tr>
+<tr>
+<td>table</td>
+<td>collection</td>
+<td>数据库表&#x2F;集合</td>
+</tr>
+<tr>
+<td>row</td>
+<td>document</td>
+<td>数据库行&#x2F;文档</td>
+</tr>
+<tr>
+<td>column</td>
+<td>field</td>
+<td>数据库字段&#x2F;域</td>
+</tr>
+<tr>
+<td>index</td>
+<td>index</td>
+<td>索引</td>
+</tr>
+<tr>
+<td>table joins</td>
+<td></td>
+<td>表连接,MongoDB不支持</td>
+</tr>
+<tr>
+<td>primary key</td>
+<td>primary key</td>
+<td>主键，MongoDB自动将_id字段设置为主键</td>
+</tr>
+</tbody></table>
+<h4 id="3-1-数据库"><a href="#3-1-数据库" class="headerlink" title="3.1. 数据库"></a>3.1. 数据库</h4><p>一个mongodb中可以创建多个数据库，默认数据库为”db”，数据库的命名有以下要求：<br>1）不能是空字符串(“”)<br>2）不得含有’’(空格)、.、$、&#x2F;、和\0（空字符）<br>3）应全部小写<br>4）最多64字节<br>有一些数据库名是保留的，可以直接访问这些有特殊作用的数据库：<br>1）admin：从权限的角度来看，这生”root”数据库，要是将一个用户添加到这个数据库，这个用户自动继承所有数据库的权限，一些特定的服务器端命令也智能从这个数据库运行，比如列出所有的数据库或者关闭服务器。<br>2）local：这个数据永远不会被复制，可以用来存储于本地单台服务器的任何集合<br>3）config：当Mongo用于分片设置时，config数据库在内部使用，用于保存分片的相关信息。</p>
+<h4 id="3-2-文档（Document）"><a href="#3-2-文档（Document）" class="headerlink" title="3.2. 文档（Document）"></a>3.2. 文档（Document）</h4><p>文档是一组键值(key-value)对，但MongoDB的文档不需要设置相同的字段，并且相同字段不需要相同的数据类型，这与关系型数据库有很大区别，也是MongoDB非常突出的特点。<br>需要注意的是：</p>
+<ol>
+<li>文档中的键&#x2F;值对是有序的。</li>
+<li>文档中的值不仅可以是在双引号里面的字符串，还可以是其他几种数据类型（甚至可以是整个嵌入的文档)。</li>
+<li>MongoDB区分类型和大小写。</li>
+<li>MongoDB的文档不能有重复的键。</li>
+<li>文档的键是字符串。除了少数例外情况，键可以使用任意UTF-8字符。</li>
+</ol>
+<h4 id="3-3-集合"><a href="#3-3-集合" class="headerlink" title="3.3. 集合"></a>3.3. 集合</h4><p>集合就是MongoDB文档组，类似于RDBMS（关系数据库管理系统:Relational Database Management System)中的表格。<br>集合存在于数据库中，集合没有固定的结构，这意味着你在对集合可以插入不同格式和类型的数据，但通常情况下我们插入集合的数据库都会有一定的关联性。</p>
+<h4 id="3-4-MongoDB数据类型："><a href="#3-4-MongoDB数据类型：" class="headerlink" title="3.4. MongoDB数据类型："></a>3.4. MongoDB数据类型：</h4><p>下表是MongoDB中常用的数据类型：</p>
+<table>
+<thead>
+<tr>
+<th>数据类型</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>String</td>
+<td>字符串。 存储数据常用的数据类型。在 MongoDB 中，UTF-8 编码的字符串才是合法的。</td>
+</tr>
+<tr>
+<td>Integer</td>
+<td>整型数值。用于存储数值。根据你所采用的服务器，可分为 32 位或 64 位。</td>
+</tr>
+<tr>
+<td>Boolean</td>
+<td>布尔值。用于存储布尔值（真&#x2F;假）。</td>
+</tr>
+<tr>
+<td>Double</td>
+<td>双精度浮点值。用于存储浮点值。</td>
+</tr>
+<tr>
+<td>Min&#x2F;Max keys</td>
+<td>将一个值与 BSON（二进制的 JSON）元素的最低值和最高值相对比。 Array 用于将数组或列表或多个值存储为一个键。</td>
+</tr>
+<tr>
+<td>Timestamp</td>
+<td>时间戳。记录文档修改或添加的具体时间。</td>
+</tr>
+<tr>
+<td>Object</td>
+<td>用于内嵌文档。</td>
+</tr>
+<tr>
+<td>Null</td>
+<td>用于创建空值。</td>
+</tr>
+<tr>
+<td>Symbol</td>
+<td>符号。该数据类型基本上等同于字符串类型，但不同的是，它一般用于采用特殊符号类型的语言。</td>
+</tr>
+<tr>
+<td>Date</td>
+<td>日期时间。用 UNIX 时间格式来存储当前日期或时间。你可以指定自己的日期时间：创建 Date 对象，传入年月日信息。</td>
+</tr>
+<tr>
+<td>Object ID</td>
+<td>对象 ID。用于创建文档的 ID。</td>
+</tr>
+<tr>
+<td>Binary Data</td>
+<td>二进制数据。 用于存储二进制数据。</td>
+</tr>
+<tr>
+<td>Code</td>
+<td>代码类型。用于在文档中存储 JavaScript 代码。</td>
+</tr>
+<tr>
+<td>Regular expression</td>
+<td>正则表达式类型。用于存储正则表达式。</td>
+</tr>
+</tbody></table>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" class="print-no-link">#中间件</a>
+      
+        <a href="/tags/MongoDB/" class="print-no-link">#MongoDB</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>MongoDB学习1—MongoDB简介</div>
+      <div>https://cxydhi.github.io/2024/04/03/MongoDB学习1—MongoDB简介/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>沉河不浮</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年4月3日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2024/04/03/MongoDB%E5%AD%A6%E4%B9%A02%E2%80%94SpringBoot%E9%9B%86%E6%88%90MongoDB/" title="MongoDB学习2—SpringBoot集成MongoDB">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">MongoDB学习2—SpringBoot集成MongoDB</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/" title="Redis学习6—Redis分布式锁">
+                        <span class="hidden-mobile">Redis学习6—Redis分布式锁</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
