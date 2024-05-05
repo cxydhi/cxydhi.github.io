@@ -1,0 +1,689 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="沉河不浮">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="添加数据库操作模板对于JDBC操作，一般包括以下几个步骤：1）注册驱动2）建立连接3）执行sql语句4）处理结果5）释放资源上面这些步骤，真正和我们处理相关的，是第三步和第四步，其他步骤，都是通用的逻辑，因此，我们可以将这些步骤抽象成一个模板方法类，其内容如下： 12345678910111213141516171819202122232425262728293031323334353637383">
+<meta property="og:type" content="article">
+<meta property="og:title" content="手撸Mybatis（四）——连接数据库进行简单查询">
+<meta property="og:url" content="https://cxydhi.github.io/2024/05/05/%E6%89%8B%E6%92%B8Mybatis%EF%BC%88%E5%9B%9B%EF%BC%89%E2%80%94%E2%80%94%E8%BF%9E%E6%8E%A5%E6%95%B0%E6%8D%AE%E5%BA%93%E8%BF%9B%E8%A1%8C%E7%AE%80%E5%8D%95%E6%9F%A5%E8%AF%A2/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="添加数据库操作模板对于JDBC操作，一般包括以下几个步骤：1）注册驱动2）建立连接3）执行sql语句4）处理结果5）释放资源上面这些步骤，真正和我们处理相关的，是第三步和第四步，其他步骤，都是通用的逻辑，因此，我们可以将这些步骤抽象成一个模板方法类，其内容如下： 12345678910111213141516171819202122232425262728293031323334353637383">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cxydhi.github.io/2024/05/05/%E6%89%8B%E6%92%B8Mybatis%EF%BC%88%E5%9B%9B%EF%BC%89%E2%80%94%E2%80%94%E8%BF%9E%E6%8E%A5%E6%95%B0%E6%8D%AE%E5%BA%93%E8%BF%9B%E8%A1%8C%E7%AE%80%E5%8D%95%E6%9F%A5%E8%AF%A2/1.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/05/05/%E6%89%8B%E6%92%B8Mybatis%EF%BC%88%E5%9B%9B%EF%BC%89%E2%80%94%E2%80%94%E8%BF%9E%E6%8E%A5%E6%95%B0%E6%8D%AE%E5%BA%93%E8%BF%9B%E8%A1%8C%E7%AE%80%E5%8D%95%E6%9F%A5%E8%AF%A2/2.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/05/05/%E6%89%8B%E6%92%B8Mybatis%EF%BC%88%E5%9B%9B%EF%BC%89%E2%80%94%E2%80%94%E8%BF%9E%E6%8E%A5%E6%95%B0%E6%8D%AE%E5%BA%93%E8%BF%9B%E8%A1%8C%E7%AE%80%E5%8D%95%E6%9F%A5%E8%AF%A2/3.png">
+<meta property="article:published_time" content="2024-05-05T02:13:08.000Z">
+<meta property="article:modified_time" content="2024-05-05T02:13:12.076Z">
+<meta property="article:author" content="沉河不浮">
+<meta property="article:tag" content="-Mybatis">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://cxydhi.github.io/2024/05/05/%E6%89%8B%E6%92%B8Mybatis%EF%BC%88%E5%9B%9B%EF%BC%89%E2%80%94%E2%80%94%E8%BF%9E%E6%8E%A5%E6%95%B0%E6%8D%AE%E5%BA%93%E8%BF%9B%E8%A1%8C%E7%AE%80%E5%8D%95%E6%9F%A5%E8%AF%A2/1.png">
+  
+  
+  
+  <title>手撸Mybatis（四）——连接数据库进行简单查询 - Hexo</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"cxydhi.github.io","root":"/","version":"1.9.5","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Fluid</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="手撸Mybatis（四）——连接数据库进行简单查询"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-05-05 10:13" pubdate>
+          2024年5月5日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          37k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          308 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">手撸Mybatis（四）——连接数据库进行简单查询</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h3 id="添加数据库操作模板"><a href="#添加数据库操作模板" class="headerlink" title="添加数据库操作模板"></a>添加数据库操作模板</h3><p>对于JDBC操作，一般包括以下几个步骤：<br>1）注册驱动<br>2）建立连接<br>3）执行sql语句<br>4）处理结果<br>5）释放资源<br>上面这些步骤，真正和我们处理相关的，是第三步和第四步，其他步骤，都是通用的逻辑，因此，我们可以将这些步骤抽象成一个模板方法类，其内容如下：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><code class="hljs json">package com.yang.mybatis.session;<br><br>import com.yang.mybatis.config.MybatisDataSource;<br><br>import java.sql.Connection;<br>import java.sql.DriverManager;<br>import java.sql.SQLException;<br><br><br>public abstract class TransactionInvoke&lt;T&gt; <span class="hljs-punctuation">&#123;</span><br>    public T invoke(MybatisDataSource mybatisDataSource) <span class="hljs-punctuation">&#123;</span><br>        String username = mybatisDataSource.getUsername();<br>        String password = mybatisDataSource.getPassword();<br>        String url = mybatisDataSource.getUrl();<br>        String driver = mybatisDataSource.getDriver();<br><br>        Connection connection = <span class="hljs-literal"><span class="hljs-keyword">null</span></span>;<br>        T result = <span class="hljs-literal"><span class="hljs-keyword">null</span></span>;<br>        try <span class="hljs-punctuation">&#123;</span><br>            Class.forName(driver);<br>            connection = DriverManager.getConnection(url<span class="hljs-punctuation">,</span> username<span class="hljs-punctuation">,</span> password);<br>            connection.setAutoCommit(<span class="hljs-literal"><span class="hljs-keyword">false</span></span>);<br>            result = execute(connection);<br>            connection.commit();<br>        <span class="hljs-punctuation">&#125;</span> catch (SQLException e) <span class="hljs-punctuation">&#123;</span><br>            try <span class="hljs-punctuation">&#123;</span><br>                connection.rollback();<br>            <span class="hljs-punctuation">&#125;</span> catch (SQLException ex) <span class="hljs-punctuation">&#123;</span><br>                throw new RuntimeException(ex);<br>            <span class="hljs-punctuation">&#125;</span><br>        <span class="hljs-punctuation">&#125;</span> catch (ClassNotFoundException e) <span class="hljs-punctuation">&#123;</span><br>            throw new RuntimeException(e);<br>        <span class="hljs-punctuation">&#125;</span> finally <span class="hljs-punctuation">&#123;</span><br>            closeResource(connection);<br>        <span class="hljs-punctuation">&#125;</span><br>        return result;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    private void closeResource(Connection connection) <span class="hljs-punctuation">&#123;</span><br>        if (connection != <span class="hljs-literal"><span class="hljs-keyword">null</span></span>) <span class="hljs-punctuation">&#123;</span><br>            try <span class="hljs-punctuation">&#123;</span><br>                connection.close();<br>            <span class="hljs-punctuation">&#125;</span> catch (SQLException e) <span class="hljs-punctuation">&#123;</span><br>                throw new RuntimeException(e);<br>            <span class="hljs-punctuation">&#125;</span><br>        <span class="hljs-punctuation">&#125;</span><br>    <span class="hljs-punctuation">&#125;</span><br><br>    public abstract T execute(Connection connection) throws SQLException;<br><span class="hljs-punctuation">&#125;</span><br><br></code></pre></td></tr></table></figure>
+<p>因为涉及到数据库操作，所以我们要先引入mysql的依赖：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs json">&lt;dependency&gt;<br>          &lt;groupId&gt;mysql&lt;/groupId&gt;<br>          &lt;artifactId&gt;mysql-connector-java&lt;/artifactId&gt;<br>          &lt;version&gt;<span class="hljs-number">8.0</span><span class="hljs-number">.27</span>&lt;/version&gt;<br>      &lt;/dependency&gt;<br></code></pre></td></tr></table></figure>
+<h3 id="查询某个字段"><a href="#查询某个字段" class="headerlink" title="查询某个字段"></a>查询某个字段</h3><p>首先，我们修改DefaultMybatisSqlSession中，在该类中，执行我们的sql语句，其中，执行sql和对sql查询结果进行处理的内容，收敛在execute方法中。</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br></pre></td><td class="code"><pre><code class="hljs json">package com.yang.mybatis.session;<br><br>import com.yang.mybatis.config.MybatisConfiguration;<br>import com.yang.mybatis.config.MybatisEnvironment;<br>import com.yang.mybatis.config.MybatisSqlStatement;<br>import com.yang.mybatis.proxy.MapperProxyFactory;<br><br>import java.sql.Connection;<br>import java.sql.PreparedStatement;<br>import java.sql.ResultSet;<br>import java.sql.SQLException;<br>import java.util.ArrayList;<br>import java.util.List;<br>import java.util.Map;<br><br><br>public class DefaultMybatisSqlSession implements IMybatisSqlSession <span class="hljs-punctuation">&#123;</span><br>    private MapperProxyFactory mapperProxyFactory;<br>    private MybatisConfiguration mybatisConfiguration;<br><br>    public DefaultMybatisSqlSession(MapperProxyFactory mapperProxyFactory) <span class="hljs-punctuation">&#123;</span><br>        this.mapperProxyFactory = mapperProxyFactory;<br>        this.mybatisConfiguration = mapperProxyFactory.getMybatisConfiguration();<br>    <span class="hljs-punctuation">&#125;</span><br><br>    @Override<br>    public &lt;T&gt; T execute(String method<span class="hljs-punctuation">,</span> Object parameter) <span class="hljs-punctuation">&#123;</span><br>        Map&lt;String<span class="hljs-punctuation">,</span> MybatisSqlStatement&gt; mapperMethod2SqlStatementsMap = mapperProxyFactory.getMybatisConfiguration().getMapperMethod2SqlStatementsMap();<br>        MybatisSqlStatement mybatisSqlStatement = mapperMethod2SqlStatementsMap.get(method);<br><br><br>        MybatisEnvironment defaultMybatisEnvironment = this.mybatisConfiguration.getDefaultMybatisEnvironment();<br><br>        return new TransactionInvoke&lt;T&gt;() <span class="hljs-punctuation">&#123;</span><br>            @Override<br>            public T execute(Connection connection) throws SQLException <span class="hljs-punctuation">&#123;</span><br>                String rawSql = mybatisSqlStatement.getSql();<br>                List&lt;String&gt; parameterNameList = new ArrayList&lt;&gt;();<br>                String sql = extractRawSql(rawSql<span class="hljs-punctuation">,</span> parameterNameList);<br>                Object<span class="hljs-punctuation">[</span><span class="hljs-punctuation">]</span> parameters = (Object<span class="hljs-punctuation">[</span><span class="hljs-punctuation">]</span>) parameter;<br>                PreparedStatement preparedStatement = connection.prepareStatement(sql);<br>                if (parameterNameList.size() != parameters.length) <span class="hljs-punctuation">&#123;</span><br>                    throw new RuntimeException(<span class="hljs-string">&quot;SQL语句参数个数不匹配====&quot;</span>);<br>                <span class="hljs-punctuation">&#125;</span><br>                int index = <span class="hljs-number">1</span>;<br>                for (Object o <span class="hljs-punctuation">:</span> parameters) <span class="hljs-punctuation">&#123;</span><br>                    preparedStatement.setObject(index ++<span class="hljs-punctuation">,</span> o);<br>                <span class="hljs-punctuation">&#125;</span><br>                ResultSet resultSet = preparedStatement.executeQuery();<br><br>                T result = <span class="hljs-literal"><span class="hljs-keyword">null</span></span>;<br>                if (resultSet.next()) <span class="hljs-punctuation">&#123;</span><br>                    result = (T) resultSet.getObject(<span class="hljs-number">1</span>);<br>                <span class="hljs-punctuation">&#125;</span><br><br>                resultSet.close();<br>                return result;<br>            <span class="hljs-punctuation">&#125;</span><br>        <span class="hljs-punctuation">&#125;</span>.invoke(defaultMybatisEnvironment.getMybatisDataSource());<br>    <span class="hljs-punctuation">&#125;</span><br><br>    private String extractRawSql(String rawSql<span class="hljs-punctuation">,</span> List&lt;String&gt; parameterNameList) <span class="hljs-punctuation">&#123;</span><br>        StringBuilder sqlBuilder = new StringBuilder();<br>        int start = <span class="hljs-number">0</span>;<br>        int end = <span class="hljs-number">-1</span>;<br>        while ((end = rawSql.indexOf(<span class="hljs-string">&quot;#&quot;</span><span class="hljs-punctuation">,</span> start)) != <span class="hljs-number">-1</span>) <span class="hljs-punctuation">&#123;</span><br>            sqlBuilder.append(rawSql.substring(start<span class="hljs-punctuation">,</span> end - <span class="hljs-number">1</span>))<br>                    .append(<span class="hljs-string">&quot; ? &quot;</span>);<br>            int parameterStart = end + <span class="hljs-number">2</span>;<br>            int parameterEnd = rawSql.indexOf(<span class="hljs-string">&quot;&#125;&quot;</span><span class="hljs-punctuation">,</span> parameterStart);<br>            parameterNameList.add(rawSql.substring(parameterStart<span class="hljs-punctuation">,</span> parameterEnd));<br>            start = parameterEnd + <span class="hljs-number">1</span>;<br>        <span class="hljs-punctuation">&#125;</span><br>        sqlBuilder.append(rawSql.substring(start));<br><br>        return sqlBuilder.toString();<br>    <span class="hljs-punctuation">&#125;</span><br><br><br>    @Override<br>    public &lt;T&gt; T getMapper(Class&lt;T&gt; type) <span class="hljs-punctuation">&#123;</span><br>        return (T) mapperProxyFactory.newInstance(type<span class="hljs-punctuation">,</span> this);<br>    <span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span><br><br></code></pre></td></tr></table></figure>
+<p>最后我们添加测试方法，进行测试：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs json">String configPath = <span class="hljs-string">&quot;mybatis-config.xml&quot;</span>;<br>        IMybatisSqlSessionFactory mybatisSqlSessionFactory = new MybatisSqlSessionFactoryBuilder()<br>                .setMybatisMapperParser(new XmlMybatisMapperParser())<br>                .setMybatisConfigurationParser(new XmlMybatisConfigurationParser())<br>                .setConfigPath(configPath)<br>                .buildSqlSessionFactory();<br><br>        IMybatisSqlSession mybatisSqlSession = mybatisSqlSessionFactory.openSession();<br><br>        IUserMapper userMapper = mybatisSqlSession.getMapper(IUserMapper.class);<br>        System.out.println(userMapper.queryUserName(<span class="hljs-number">1</span>));<br></code></pre></td></tr></table></figure>
+<p>测试结果如下：</p>
+<img src="/2024/05/05/%E6%89%8B%E6%92%B8Mybatis%EF%BC%88%E5%9B%9B%EF%BC%89%E2%80%94%E2%80%94%E8%BF%9E%E6%8E%A5%E6%95%B0%E6%8D%AE%E5%BA%93%E8%BF%9B%E8%A1%8C%E7%AE%80%E5%8D%95%E6%9F%A5%E8%AF%A2/1.png" srcset="/img/loading.gif" lazyload class="">
+<h3 id="查询结果封装为对象"><a href="#查询结果封装为对象" class="headerlink" title="查询结果封装为对象"></a>查询结果封装为对象</h3><h4 id="基于resultType"><a href="#基于resultType" class="headerlink" title="基于resultType"></a>基于resultType</h4><p>上述的操作，只对查询某个字段有效，假设我们要获取的是一个对象，比如我们在UserMapper添加如下方法：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs json">User queryUserById(Integer id);<br><br></code></pre></td></tr></table></figure>
+<p>其中，User类内容如下：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><code class="hljs json"><br>public class User implements Serializable <span class="hljs-punctuation">&#123;</span><br>    private Integer id;<br><br>    private String userName;<br><br>    private String password;<br><br>    private Integer age;<br><br>    private LocalDateTime createTime;<br><br>    public Integer getId() <span class="hljs-punctuation">&#123;</span><br>        return id;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public void setId(Integer id) <span class="hljs-punctuation">&#123;</span><br>        this.id = id;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public String getUserName() <span class="hljs-punctuation">&#123;</span><br>        return userName;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public void setUserName(String userName) <span class="hljs-punctuation">&#123;</span><br>        this.userName = userName;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public String getPassword() <span class="hljs-punctuation">&#123;</span><br>        return password;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public void setPassword(String password) <span class="hljs-punctuation">&#123;</span><br>        this.password = password;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public Integer getAge() <span class="hljs-punctuation">&#123;</span><br>        return age;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public void setAge(Integer age) <span class="hljs-punctuation">&#123;</span><br>        this.age = age;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public LocalDateTime getCreateTime() <span class="hljs-punctuation">&#123;</span><br>        return createTime;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public void setCreateTime(LocalDateTime createTime) <span class="hljs-punctuation">&#123;</span><br>        this.createTime = createTime;<br>    <span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span><br><br></code></pre></td></tr></table></figure>
+<p>该方法对于的mapperxml查询块如下：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs json">&lt;select id=<span class="hljs-string">&quot;queryUserById&quot;</span> resultType=<span class="hljs-string">&quot;com.yang.mybatis.test.User&quot;</span>&gt;<br>      select * from user<br>      where id = #<span class="hljs-punctuation">&#123;</span>id<span class="hljs-punctuation">&#125;</span><br>  &lt;/select&gt;<br></code></pre></td></tr></table></figure>
+<p>此时，当我们使用JDBC执行sql，获取ResultSet后，我们可以根据resultType的类型，通过反射的方式，来创建对应的结果，并将属性填充到对象中。<br>首先，我们修改MybatisSqlStatement，添加resultType字段</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><code class="hljs json">package com.yang.mybatis.config;<br><br>import java.io.Serializable;<br><br>public class MybatisSqlStatement implements Serializable <span class="hljs-punctuation">&#123;</span><br>    private String namespace;<br><br>    private String id;<br><br>    private String sql;<br>    <br>    private String resultType;<br><br>    public String getNamespace() <span class="hljs-punctuation">&#123;</span><br>        return namespace;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public void setNamespace(String namespace) <span class="hljs-punctuation">&#123;</span><br>        this.namespace = namespace;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public String getId() <span class="hljs-punctuation">&#123;</span><br>        return id;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public void setId(String id) <span class="hljs-punctuation">&#123;</span><br>        this.id = id;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public String getSql() <span class="hljs-punctuation">&#123;</span><br>        return sql;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public void setSql(String sql) <span class="hljs-punctuation">&#123;</span><br>        this.sql = sql;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public String getResultType() <span class="hljs-punctuation">&#123;</span><br>        return resultType;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public void setResultType(String resultType) <span class="hljs-punctuation">&#123;</span><br>        this.resultType = resultType;<br>    <span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span><br><br></code></pre></td></tr></table></figure>
+<p>然后修改XmlMybatisMapperParser的parseStatement方法，设置对应的resultType值</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs json">private void parseStatement(List&lt;MybatisSqlStatement&gt; mybatisSqlStatements<span class="hljs-punctuation">,</span> List&lt;Element&gt; elements<span class="hljs-punctuation">,</span> Element root) <span class="hljs-punctuation">&#123;</span><br>        if (elements == <span class="hljs-literal"><span class="hljs-keyword">null</span></span> || elements.isEmpty()) <span class="hljs-punctuation">&#123;</span><br>            return;<br>        <span class="hljs-punctuation">&#125;</span><br>        String namespace = root.attributeValue(<span class="hljs-string">&quot;namespace&quot;</span>);<br>        for (Element element <span class="hljs-punctuation">:</span> elements) <span class="hljs-punctuation">&#123;</span><br>            String id = element.attributeValue(<span class="hljs-string">&quot;id&quot;</span>);<br>            String resultType = element.attributeValue(<span class="hljs-string">&quot;resultType&quot;</span>);<br>            String sql = element.getText().trim();<br><br>            MybatisSqlStatement mybatisSqlStatement = new MybatisSqlStatement();<br>            mybatisSqlStatement.setNamespace(namespace);<br>            mybatisSqlStatement.setId(id);<br>            mybatisSqlStatement.setSql(sql);<br>            mybatisSqlStatement.setResultType(resultType);<br><br>            mybatisSqlStatements.add(mybatisSqlStatement);<br>        <span class="hljs-punctuation">&#125;</span><br>    <span class="hljs-punctuation">&#125;</span><br></code></pre></td></tr></table></figure>
+<p>最后修改DefaultMybatisSqlSession:</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br></pre></td><td class="code"><pre><code class="hljs json">package com.yang.mybatis.session;<br><br>import com.google.common.base.CaseFormat;<br>import com.yang.mybatis.config.MybatisConfiguration;<br>import com.yang.mybatis.config.MybatisEnvironment;<br>import com.yang.mybatis.config.MybatisSqlStatement;<br>import com.yang.mybatis.proxy.MapperProxyFactory;<br><br>import java.lang.reflect.Field;<br>import java.sql.Connection;<br>import java.sql.PreparedStatement;<br>import java.sql.ResultSet;<br>import java.sql.SQLException;<br>import java.util.ArrayList;<br>import java.util.HashMap;<br>import java.util.List;<br>import java.util.Map;<br><br><br>public class DefaultMybatisSqlSession implements IMybatisSqlSession <span class="hljs-punctuation">&#123;</span><br>    private MapperProxyFactory mapperProxyFactory;<br>    private MybatisConfiguration mybatisConfiguration;<br><br>    public DefaultMybatisSqlSession(MapperProxyFactory mapperProxyFactory) <span class="hljs-punctuation">&#123;</span><br>        this.mapperProxyFactory = mapperProxyFactory;<br>        this.mybatisConfiguration = mapperProxyFactory.getMybatisConfiguration();<br>    <span class="hljs-punctuation">&#125;</span><br><br>    @Override<br>    public &lt;T&gt; T execute(String method<span class="hljs-punctuation">,</span> Object parameter) <span class="hljs-punctuation">&#123;</span><br>        Map&lt;String<span class="hljs-punctuation">,</span> MybatisSqlStatement&gt; mapperMethod2SqlStatementsMap = mapperProxyFactory.getMybatisConfiguration().getMapperMethod2SqlStatementsMap();<br>        MybatisSqlStatement mybatisSqlStatement = mapperMethod2SqlStatementsMap.get(method);<br><br><br>        MybatisEnvironment defaultMybatisEnvironment = this.mybatisConfiguration.getDefaultMybatisEnvironment();<br><br>        return new TransactionInvoke&lt;T&gt;() <span class="hljs-punctuation">&#123;</span><br>            @Override<br>            public T execute(Connection connection) throws SQLException <span class="hljs-punctuation">&#123;</span><br>                String rawSql = mybatisSqlStatement.getSql();<br>                List&lt;String&gt; parameterNameList = new ArrayList&lt;&gt;();<br>                String sql = extractRawSql(rawSql<span class="hljs-punctuation">,</span> parameterNameList);<br>                Object<span class="hljs-punctuation">[</span><span class="hljs-punctuation">]</span> parameters = (Object<span class="hljs-punctuation">[</span><span class="hljs-punctuation">]</span>) parameter;<br>                PreparedStatement preparedStatement = connection.prepareStatement(sql);<br>                if (parameterNameList.size() != parameters.length) <span class="hljs-punctuation">&#123;</span><br>                    throw new RuntimeException(<span class="hljs-string">&quot;SQL语句参数个数不匹配====&quot;</span>);<br>                <span class="hljs-punctuation">&#125;</span><br>                int index = <span class="hljs-number">1</span>;<br>                for (Object o <span class="hljs-punctuation">:</span> parameters) <span class="hljs-punctuation">&#123;</span><br>                    preparedStatement.setObject(index ++<span class="hljs-punctuation">,</span> o);<br>                <span class="hljs-punctuation">&#125;</span><br>                ResultSet resultSet = preparedStatement.executeQuery();<br><br>                T result = parseResult(resultSet<span class="hljs-punctuation">,</span> mybatisSqlStatement);<br>                resultSet.close();<br>                return result;<br>            <span class="hljs-punctuation">&#125;</span><br>        <span class="hljs-punctuation">&#125;</span>.invoke(defaultMybatisEnvironment.getMybatisDataSource());<br>    <span class="hljs-punctuation">&#125;</span><br><br>    private &lt;T&gt; T parseResult(ResultSet resultSet<span class="hljs-punctuation">,</span> MybatisSqlStatement mybatisSqlStatement) throws SQLException <span class="hljs-punctuation">&#123;</span><br>        String resultType = mybatisSqlStatement.getResultType();<br>        if (resultType == <span class="hljs-literal"><span class="hljs-keyword">null</span></span> || resultType.isEmpty()) <span class="hljs-punctuation">&#123;</span><br>            return (T) resultSet.getObject(<span class="hljs-number">1</span>);<br>        <span class="hljs-punctuation">&#125;</span><br><br>        try <span class="hljs-punctuation">&#123;</span><br>            Class&lt;?&gt; aClass = Class.forName(resultType);<br>            Field<span class="hljs-punctuation">[</span><span class="hljs-punctuation">]</span> fields = aClass.getDeclaredFields();<br>            Map&lt;String<span class="hljs-punctuation">,</span> String&gt; fieldName2ColumnNameMap = new HashMap&lt;&gt;();<br>            Map&lt;String<span class="hljs-punctuation">,</span> Field&gt; fieldName2FieldMap = new HashMap&lt;&gt;();<br>            for (Field field <span class="hljs-punctuation">:</span> fields) <span class="hljs-punctuation">&#123;</span><br>                <span class="hljs-comment">// 驼峰命名转下划线</span><br>                String columnName = CaseFormat.LOWER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE<span class="hljs-punctuation">,</span> field.getName());<br>                fieldName2ColumnNameMap.put(field.getName()<span class="hljs-punctuation">,</span> columnName);<br>                fieldName2FieldMap.put(field.getName()<span class="hljs-punctuation">,</span> field);<br>            <span class="hljs-punctuation">&#125;</span><br><br>            Object result = aClass.newInstance();<br>            while (resultSet.next()) <span class="hljs-punctuation">&#123;</span><br>                for (Map.Entry&lt;String<span class="hljs-punctuation">,</span> String&gt; entry <span class="hljs-punctuation">:</span> fieldName2ColumnNameMap.entrySet()) <span class="hljs-punctuation">&#123;</span><br>                    String fieldName = entry.getKey();<br>                    String columnName = entry.getValue();<br><br>                    Object columnValue = resultSet.getObject(columnName);<br>                    Field field = fieldName2FieldMap.get(fieldName);<br>                    field.setAccessible(<span class="hljs-literal"><span class="hljs-keyword">true</span></span>);<br>                    field.set(result<span class="hljs-punctuation">,</span> columnValue);<br>                <span class="hljs-punctuation">&#125;</span><br>            <span class="hljs-punctuation">&#125;</span><br>            return (T)result;<br>        <span class="hljs-punctuation">&#125;</span> catch (ClassNotFoundException e) <span class="hljs-punctuation">&#123;</span><br>            throw new RuntimeException(e);<br>        <span class="hljs-punctuation">&#125;</span> catch (InstantiationException | IllegalAccessException e) <span class="hljs-punctuation">&#123;</span><br>            throw new RuntimeException(e);<br>        <span class="hljs-punctuation">&#125;</span><br>    <span class="hljs-punctuation">&#125;</span><br><br>    private String extractRawSql(String rawSql<span class="hljs-punctuation">,</span> List&lt;String&gt; parameterNameList) <span class="hljs-punctuation">&#123;</span><br>        StringBuilder sqlBuilder = new StringBuilder();<br>        int start = <span class="hljs-number">0</span>;<br>        int end = <span class="hljs-number">-1</span>;<br>        while ((end = rawSql.indexOf(<span class="hljs-string">&quot;#&quot;</span><span class="hljs-punctuation">,</span> start)) != <span class="hljs-number">-1</span>) <span class="hljs-punctuation">&#123;</span><br>            sqlBuilder.append(rawSql.substring(start<span class="hljs-punctuation">,</span> end - <span class="hljs-number">1</span>))<br>                    .append(<span class="hljs-string">&quot; ? &quot;</span>);<br>            int parameterStart = end + <span class="hljs-number">2</span>;<br>            int parameterEnd = rawSql.indexOf(<span class="hljs-string">&quot;&#125;&quot;</span><span class="hljs-punctuation">,</span> parameterStart);<br>            parameterNameList.add(rawSql.substring(parameterStart<span class="hljs-punctuation">,</span> parameterEnd));<br>            start = parameterEnd + <span class="hljs-number">1</span>;<br>        <span class="hljs-punctuation">&#125;</span><br>        sqlBuilder.append(rawSql.substring(start));<br><br>        return sqlBuilder.toString();<br>    <span class="hljs-punctuation">&#125;</span><br><br><br>    @Override<br>    public &lt;T&gt; T getMapper(Class&lt;T&gt; type) <span class="hljs-punctuation">&#123;</span><br>        return (T) mapperProxyFactory.newInstance(type<span class="hljs-punctuation">,</span> this);<br>    <span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span><br><br></code></pre></td></tr></table></figure>
+<p>这里将和结果相关的解析，抽取到parseResult方法中，此外，因为数据库是字段是下划线格式，类的属性是驼峰格式，因此，这里引入了Guava依赖，方便使用它的CaseFormat类进行格式转化。</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs json">&lt;dependency&gt;<br>          &lt;groupId&gt;com.google.guava&lt;/groupId&gt;<br>          &lt;artifactId&gt;guava&lt;/artifactId&gt;<br>          &lt;version&gt;<span class="hljs-number">31.1</span>-jre&lt;/version&gt;<br>      &lt;/dependency&gt;<br></code></pre></td></tr></table></figure>
+<p>最后，我们添加测试方法，进行测试：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs json">public static void main(String<span class="hljs-punctuation">[</span><span class="hljs-punctuation">]</span> args) <span class="hljs-punctuation">&#123;</span><br>       String configPath = <span class="hljs-string">&quot;mybatis-config.xml&quot;</span>;<br>       IMybatisSqlSessionFactory mybatisSqlSessionFactory = new MybatisSqlSessionFactoryBuilder()<br>               .setMybatisMapperParser(new XmlMybatisMapperParser())<br>               .setMybatisConfigurationParser(new XmlMybatisConfigurationParser())<br>               .setConfigPath(configPath)<br>               .buildSqlSessionFactory();<br><br>       IMybatisSqlSession mybatisSqlSession = mybatisSqlSessionFactory.openSession();<br><br>       IUserMapper userMapper = mybatisSqlSession.getMapper(IUserMapper.class);<br>       User user = userMapper.queryUserById(<span class="hljs-number">1</span>);<br>       System.out.println(user);<br>       System.out.println(user.getId());<br>       System.out.println(user.getUserName());<br>       System.out.println(user.getPassword());<br>       System.out.println(user.getAge());<br>       System.out.println(user.getCreateTime());<br>   <span class="hljs-punctuation">&#125;</span><br></code></pre></td></tr></table></figure>
+<p>测试结果如下：</p>
+<img src="/2024/05/05/%E6%89%8B%E6%92%B8Mybatis%EF%BC%88%E5%9B%9B%EF%BC%89%E2%80%94%E2%80%94%E8%BF%9E%E6%8E%A5%E6%95%B0%E6%8D%AE%E5%BA%93%E8%BF%9B%E8%A1%8C%E7%AE%80%E5%8D%95%E6%9F%A5%E8%AF%A2/2.png" srcset="/img/loading.gif" lazyload class="">
+<h4 id="基于resultMap"><a href="#基于resultMap" class="headerlink" title="基于resultMap"></a>基于resultMap</h4><p>上面的方式，是基于resultType来进行解析的，但是在mybatis中，还有另外一种将sql字段和类对象属性映射的方式，就是resultMap。<br>首先，我们创建一个IdUserNameVO类</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs json">package com.yang.mybatis.test;<br><br>import java.io.Serializable;<br><br>public class IdUserNameVO implements Serializable <span class="hljs-punctuation">&#123;</span><br>    private Integer id;<br><br>    private String userName;<br><br>    public Integer getId() <span class="hljs-punctuation">&#123;</span><br>        return id;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public void setId(Integer id) <span class="hljs-punctuation">&#123;</span><br>        this.id = id;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public String getUserName() <span class="hljs-punctuation">&#123;</span><br>        return userName;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public void setUserName(String userName) <span class="hljs-punctuation">&#123;</span><br>        this.userName = userName;<br>    <span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span><br><br></code></pre></td></tr></table></figure>
+<p>在IUserMapper中，我们添加下列方法：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs json">IdUserNameVO queryIdUserNameVOById(Integer id);<br><br></code></pre></td></tr></table></figure>
+<p>修改UserMapper.xml，加上queryIdUserNameVOById的sql语句和对应的resultMap</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs json">&lt;?xml version=<span class="hljs-string">&quot;1.0&quot;</span> encoding=<span class="hljs-string">&quot;UTF-8&quot;</span> ?&gt;<br>&lt;!DOCTYPE mapper<br>        PUBLIC <span class="hljs-string">&quot;-//mybatis.org//DTD Mapper 3.0//EN&quot;</span><br>        <span class="hljs-string">&quot;http://mybatis.org/dtd/mybatis-3-mapper.dtd&quot;</span>&gt;<br><br><br>&lt;mapper namespace=<span class="hljs-string">&quot;com.yang.mybatis.test.IUserMapper&quot;</span>&gt;<br>    &lt;resultMap id=<span class="hljs-string">&quot;idUserName&quot;</span> type=<span class="hljs-string">&quot;com.yang.mybatis.test.IdUserNameVO&quot;</span>&gt;<br>        &lt;id property=<span class="hljs-string">&quot;id&quot;</span> column=<span class="hljs-string">&quot;id&quot;</span> javaType=<span class="hljs-string">&quot;Integer&quot;</span> jdbcType=<span class="hljs-string">&quot;int&quot;</span>/&gt;<br>        &lt;result property=<span class="hljs-string">&quot;userName&quot;</span> column=<span class="hljs-string">&quot;user_name&quot;</span> javaType=<span class="hljs-string">&quot;String&quot;</span> jdbcType=<span class="hljs-string">&quot;VARCHAR&quot;</span>/&gt;<br>    &lt;/resultMap&gt;<br><br>    &lt;select id=<span class="hljs-string">&quot;queryUserName&quot;</span>&gt;<br>        select user_name from user where id = #<span class="hljs-punctuation">&#123;</span>id<span class="hljs-punctuation">&#125;</span><br>    &lt;/select&gt;<br>    &lt;select id=<span class="hljs-string">&quot;queryUserAge&quot;</span>&gt;<br>        select age from user where id = #<span class="hljs-punctuation">&#123;</span>id<span class="hljs-punctuation">&#125;</span><br>    &lt;/select&gt;<br>    &lt;select id=<span class="hljs-string">&quot;queryUserById&quot;</span> resultType=<span class="hljs-string">&quot;com.yang.mybatis.test.User&quot;</span>&gt;<br>        select * from user<br>        where id = #<span class="hljs-punctuation">&#123;</span>id<span class="hljs-punctuation">&#125;</span><br>    &lt;/select&gt;<br>    &lt;select id=<span class="hljs-string">&quot;queryIdUserNameVOById&quot;</span> resultMap=<span class="hljs-string">&quot;idUserName&quot;</span>&gt;<br>        select id<span class="hljs-punctuation">,</span> user_name<br>        from user<br>        where id = #<span class="hljs-punctuation">&#123;</span>id<span class="hljs-punctuation">&#125;</span><br>    &lt;/select&gt;<br>&lt;/mapper&gt;<br></code></pre></td></tr></table></figure>
+<p>之前，我们在解析每一个mapper.xml文件时，解析出来的结果，是一个MybatisSqlStatement列表，但是这种方式还不能更好的表达一个mapper.xml中包含的信息，因此，我们修改代码，现在对于每一个mapper.xml文件，解析出来的结果位MybatisMapperXmlConfiguration类，该类定义如下：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><code class="hljs json">package com.yang.mybatis.config;<br><br>import java.io.Serializable;<br>import java.util.ArrayList;<br>import java.util.HashMap;<br>import java.util.List;<br>import java.util.Map;<br><br>public class MybatisMapperXmlConfiguration implements Serializable <span class="hljs-punctuation">&#123;</span><br>    private String mapperName;<br><br>    private List&lt;MybatisSqlStatement&gt; mybatisSqlStatements = new ArrayList&lt;&gt;();<br><br>    private Map&lt;String<span class="hljs-punctuation">,</span> MybatisResultMap&gt; mybatisResultMaps = new HashMap&lt;&gt;();<br><br><br>    public List&lt;MybatisSqlStatement&gt; getMybatisSqlStatements() <span class="hljs-punctuation">&#123;</span><br>        return mybatisSqlStatements;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public void setMybatisSqlStatements(List&lt;MybatisSqlStatement&gt; mybatisSqlStatements) <span class="hljs-punctuation">&#123;</span><br>        this.mybatisSqlStatements = mybatisSqlStatements;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public List&lt;MybatisResultMap&gt; getMybatisResultMaps() <span class="hljs-punctuation">&#123;</span><br>        return new ArrayList&lt;&gt;(mybatisResultMaps.values());<br>    <span class="hljs-punctuation">&#125;</span><br><br><br>    public void addMybatisSqlStatement(MybatisSqlStatement mybatisSqlStatement) <span class="hljs-punctuation">&#123;</span><br>        this.mybatisSqlStatements.add(mybatisSqlStatement);<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public void addMybatisResultMap(MybatisResultMap mybatisResultMap) <span class="hljs-punctuation">&#123;</span><br>        this.mybatisResultMaps.put(mybatisResultMap.getId()<span class="hljs-punctuation">,</span> mybatisResultMap);<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public MybatisResultMap getMybatisResultMap(String id) <span class="hljs-punctuation">&#123;</span><br>        return this.mybatisResultMaps.get(id);<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public String getMapperName() <span class="hljs-punctuation">&#123;</span><br>        return mapperName;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public void setMapperName(String mapperName) <span class="hljs-punctuation">&#123;</span><br>        this.mapperName = mapperName;<br>    <span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span><br><br></code></pre></td></tr></table></figure>
+<p>MybatisResultMap的定义如下：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><code class="hljs json">package com.yang.mybatis.config;<br><br>import java.io.Serializable;<br>import java.util.ArrayList;<br>import java.util.List;<br><br>public class MybatisResultMap implements Serializable <span class="hljs-punctuation">&#123;</span><br>    private String id;<br>    private String type;<br>    private MybatisResultMapProperty idProperty;<br><br>    private List&lt;MybatisResultMapProperty&gt; properties = new ArrayList&lt;&gt;();<br><br>    public void addMybatisResultMapProperty(MybatisResultMapProperty mybatisResultMapProperty) <span class="hljs-punctuation">&#123;</span><br>        this.properties.add(mybatisResultMapProperty);<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public String getId() <span class="hljs-punctuation">&#123;</span><br>        return id;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public void setId(String id) <span class="hljs-punctuation">&#123;</span><br>        this.id = id;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public String getType() <span class="hljs-punctuation">&#123;</span><br>        return type;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public void setType(String type) <span class="hljs-punctuation">&#123;</span><br>        this.type = type;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public MybatisResultMapProperty getIdProperty() <span class="hljs-punctuation">&#123;</span><br>        return idProperty;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public void setIdProperty(MybatisResultMapProperty idProperty) <span class="hljs-punctuation">&#123;</span><br>        this.idProperty = idProperty;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public List&lt;MybatisResultMapProperty&gt; getProperties() <span class="hljs-punctuation">&#123;</span><br>        return this.properties;<br>    <span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span><br><br></code></pre></td></tr></table></figure>
+<p>MybatisResultMapProperty类定义如下：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs json">package com.yang.mybatis.config;<br><br>import java.io.Serializable;<br><br>public class MybatisResultMapProperty implements Serializable <span class="hljs-punctuation">&#123;</span><br>    private String property;<br><br>    private String column;<br><br>    private String javaType;<br><br>    private String jdbcType;<br><br>   ... 省略getter和setter<br><span class="hljs-punctuation">&#125;</span><br><br></code></pre></td></tr></table></figure>
+<p>我们修改IMybatisMapperParser接口：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs json">package com.yang.mybatis.config.parser;<br><br>import com.yang.mybatis.config.MybatisMapperXmlConfiguration;<br><br>public interface IMybatisMapperParser <span class="hljs-punctuation">&#123;</span><br>    MybatisMapperXmlConfiguration parseMapper(String path);<br><span class="hljs-punctuation">&#125;</span><br><br></code></pre></td></tr></table></figure>
+<p>修改MybatisStatement，加上resultMap属性：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><code class="hljs json">package com.yang.mybatis.config;<br><br>import java.io.Serializable;<br><br>public class MybatisSqlStatement implements Serializable <span class="hljs-punctuation">&#123;</span><br>    private String namespace;<br><br>    private String id;<br><br>    private String sql;<br><br>    private String resultType;<br><br>    private String resultMap;<br><br>    public String getNamespace() <span class="hljs-punctuation">&#123;</span><br>        return namespace;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public void setNamespace(String namespace) <span class="hljs-punctuation">&#123;</span><br>        this.namespace = namespace;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public String getId() <span class="hljs-punctuation">&#123;</span><br>        return id;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public void setId(String id) <span class="hljs-punctuation">&#123;</span><br>        this.id = id;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public String getSql() <span class="hljs-punctuation">&#123;</span><br>        return sql;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public void setSql(String sql) <span class="hljs-punctuation">&#123;</span><br>        this.sql = sql;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public String getResultType() <span class="hljs-punctuation">&#123;</span><br>        return resultType;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public void setResultType(String resultType) <span class="hljs-punctuation">&#123;</span><br>        this.resultType = resultType;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public String getResultMap() <span class="hljs-punctuation">&#123;</span><br>        return resultMap;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public void setResultMap(String resultMap) <span class="hljs-punctuation">&#123;</span><br>        this.resultMap = resultMap;<br>    <span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span><br><br></code></pre></td></tr></table></figure>
+<p>修改其IMybatisMapperParser具体实现：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br></pre></td><td class="code"><pre><code class="hljs json">package com.yang.mybatis.config.parser;<br><br>import com.yang.mybatis.config.MybatisMapperXmlConfiguration;<br>import com.yang.mybatis.config.MybatisResultMap;<br>import com.yang.mybatis.config.MybatisResultMapProperty;<br>import com.yang.mybatis.config.MybatisSqlStatement;<br>import org.dom4j.Document;<br>import org.dom4j.DocumentException;<br>import org.dom4j.Element;<br>import org.dom4j.io.SAXReader;<br><br>import java.io.InputStream;<br>import java.util.HashSet;<br>import java.util.List;<br>import java.util.Set;<br><br>public class XmlMybatisMapperParser implements IMybatisMapperParser <span class="hljs-punctuation">&#123;</span><br>    private final static Set&lt;String&gt; tagSet = new HashSet&lt;&gt;();<br><br>    private final static Set&lt;String&gt; resultMapTagSet = new HashSet&lt;&gt;();<br><br>    static <span class="hljs-punctuation">&#123;</span><br>        tagSet.add(<span class="hljs-string">&quot;select&quot;</span>);<br>        tagSet.add(<span class="hljs-string">&quot;insert&quot;</span>);<br>        tagSet.add(<span class="hljs-string">&quot;update&quot;</span>);<br>        tagSet.add(<span class="hljs-string">&quot;delete&quot;</span>);<br>        tagSet.add(<span class="hljs-string">&quot;SELECT&quot;</span>);<br>        tagSet.add(<span class="hljs-string">&quot;INSERT&quot;</span>);<br>        tagSet.add(<span class="hljs-string">&quot;UPDATE&quot;</span>);<br>        tagSet.add(<span class="hljs-string">&quot;DELETE&quot;</span>);<br><br>        resultMapTagSet.add(<span class="hljs-string">&quot;resultMap&quot;</span>);<br>        resultMapTagSet.add(<span class="hljs-string">&quot;ResultMap&quot;</span>);<br>    <span class="hljs-punctuation">&#125;</span><br>    @Override<br>    public MybatisMapperXmlConfiguration parseMapper(String path) <span class="hljs-punctuation">&#123;</span><br>        MybatisMapperXmlConfiguration mybatisMapperXmlConfiguration = new MybatisMapperXmlConfiguration();<br>        try <span class="hljs-punctuation">&#123;</span><br>            InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(path);<br>            SAXReader saxReader = new SAXReader();<br>            Document document = saxReader.read(inputStream);<br>            Element root = document.getRootElement();<br><br>            parseMapperName(mybatisMapperXmlConfiguration<span class="hljs-punctuation">,</span> root);<br>            for (String tag <span class="hljs-punctuation">:</span> tagSet) <span class="hljs-punctuation">&#123;</span><br>                List&lt;Element&gt; elements = root.elements(tag);<br>                parseStatement(mybatisMapperXmlConfiguration<span class="hljs-punctuation">,</span> elements);<br>            <span class="hljs-punctuation">&#125;</span><br>            for (String tag<span class="hljs-punctuation">:</span> resultMapTagSet) <span class="hljs-punctuation">&#123;</span><br>                List&lt;Element&gt; elements = root.elements(tag);<br>                parseResultMap(mybatisMapperXmlConfiguration<span class="hljs-punctuation">,</span> elements);<br>            <span class="hljs-punctuation">&#125;</span><br>        <span class="hljs-punctuation">&#125;</span> catch (DocumentException e) <span class="hljs-punctuation">&#123;</span><br>            e.printStackTrace();<br>        <span class="hljs-punctuation">&#125;</span><br>        return mybatisMapperXmlConfiguration;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    private void parseMapperName(MybatisMapperXmlConfiguration mybatisMapperXmlConfiguration<span class="hljs-punctuation">,</span> Element root) <span class="hljs-punctuation">&#123;</span><br>        String mapperName = root.attributeValue(<span class="hljs-string">&quot;namespace&quot;</span>);<br>        mybatisMapperXmlConfiguration.setMapperName(mapperName);<br><br>    <span class="hljs-punctuation">&#125;</span><br><br>    private void parseResultMap(MybatisMapperXmlConfiguration mybatisMapperXmlConfiguration<span class="hljs-punctuation">,</span> List&lt;Element&gt; elements) <span class="hljs-punctuation">&#123;</span><br>        if (elements == <span class="hljs-literal"><span class="hljs-keyword">null</span></span> || elements.isEmpty()) <span class="hljs-punctuation">&#123;</span><br>            return;<br>        <span class="hljs-punctuation">&#125;</span><br>        for (Element element <span class="hljs-punctuation">:</span> elements) <span class="hljs-punctuation">&#123;</span><br>            String id = element.attributeValue(<span class="hljs-string">&quot;id&quot;</span>);<br>            String type = element.attributeValue(<span class="hljs-string">&quot;type&quot;</span>);<br><br>            MybatisResultMap mybatisResultMap = new MybatisResultMap();<br>            mybatisResultMap.setId(id);<br>            mybatisResultMap.setType(type);<br><br>            Element idElement = element.element(<span class="hljs-string">&quot;id&quot;</span>);<br>            if (idElement != <span class="hljs-literal"><span class="hljs-keyword">null</span></span>) <span class="hljs-punctuation">&#123;</span><br>                MybatisResultMapProperty mybatisResultMapProperty = buildMybatisResultMapProperty(idElement);<br>                mybatisResultMap.addMybatisResultMapProperty(mybatisResultMapProperty);<br>                mybatisResultMap.setIdProperty(mybatisResultMapProperty);<br>            <span class="hljs-punctuation">&#125;</span><br><br>            List&lt;Element&gt; resultList = element.elements(<span class="hljs-string">&quot;result&quot;</span>);<br>            for (Element resultElement <span class="hljs-punctuation">:</span> resultList) <span class="hljs-punctuation">&#123;</span><br>                MybatisResultMapProperty mybatisResultMapProperty = buildMybatisResultMapProperty(resultElement);<br>                mybatisResultMap.addMybatisResultMapProperty(mybatisResultMapProperty);<br>            <span class="hljs-punctuation">&#125;</span><br><br>            mybatisMapperXmlConfiguration.addMybatisResultMap(mybatisResultMap);<br>        <span class="hljs-punctuation">&#125;</span><br>    <span class="hljs-punctuation">&#125;</span><br><br>    private MybatisResultMapProperty buildMybatisResultMapProperty(Element element) <span class="hljs-punctuation">&#123;</span><br>        MybatisResultMapProperty mybatisResultMapProperty = new MybatisResultMapProperty();<br>        String property = element.attributeValue(<span class="hljs-string">&quot;property&quot;</span>);<br>        String column = element.attributeValue(<span class="hljs-string">&quot;column&quot;</span>);<br>        String javaType = element.attributeValue(<span class="hljs-string">&quot;javaType&quot;</span>);<br>        String jdbcType = element.attributeValue(<span class="hljs-string">&quot;jdbcType&quot;</span>);<br>        mybatisResultMapProperty.setProperty(property);<br>        mybatisResultMapProperty.setColumn(column);<br>        mybatisResultMapProperty.setJavaType(javaType);<br>        mybatisResultMapProperty.setJdbcType(jdbcType);<br>        return mybatisResultMapProperty;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    private void parseStatement(MybatisMapperXmlConfiguration mybatisMapperXmlConfiguration<span class="hljs-punctuation">,</span> List&lt;Element&gt; elements) <span class="hljs-punctuation">&#123;</span><br>        if (elements == <span class="hljs-literal"><span class="hljs-keyword">null</span></span> || elements.isEmpty()) <span class="hljs-punctuation">&#123;</span><br>            return;<br>        <span class="hljs-punctuation">&#125;</span><br>        String namespace = mybatisMapperXmlConfiguration.getMapperName();<br>        for (Element element <span class="hljs-punctuation">:</span> elements) <span class="hljs-punctuation">&#123;</span><br>            String id = element.attributeValue(<span class="hljs-string">&quot;id&quot;</span>);<br>            String resultType = element.attributeValue(<span class="hljs-string">&quot;resultType&quot;</span>);<br>            String resultMap = element.attributeValue(<span class="hljs-string">&quot;resultMap&quot;</span>);<br>            String sql = element.getText().trim();<br><br>            MybatisSqlStatement mybatisSqlStatement = new MybatisSqlStatement();<br>            mybatisSqlStatement.setNamespace(namespace);<br>            mybatisSqlStatement.setId(id);<br>            mybatisSqlStatement.setSql(sql);<br>            mybatisSqlStatement.setResultType(resultType);<br>            mybatisSqlStatement.setResultMap(resultMap);<br><br>            mybatisMapperXmlConfiguration.addMybatisSqlStatement(mybatisSqlStatement);<br>        <span class="hljs-punctuation">&#125;</span><br>    <span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span><br><br></code></pre></td></tr></table></figure>
+<p>修改MybatisSqlSessionFactoryBuilder类：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><code class="hljs json">package com.yang.mybatis.session;<br><br>import com.yang.mybatis.config.MybatisConfiguration;<br>import com.yang.mybatis.config.MybatisMapperXmlConfiguration;<br>import com.yang.mybatis.config.MybatisSqlStatement;<br>import com.yang.mybatis.config.parser.IMybatisConfigurationParser;<br>import com.yang.mybatis.config.parser.IMybatisMapperParser;<br>import com.yang.mybatis.mapper.MapperProxyFactory;<br><br>import java.util.List;<br><br>public class MybatisSqlSessionFactoryBuilder <span class="hljs-punctuation">&#123;</span><br>    private IMybatisConfigurationParser mybatisConfigurationParser;<br><br>    private IMybatisMapperParser mybatisMapperParser;<br><br>    private String configPath;<br><br>    public MybatisSqlSessionFactory buildSqlSessionFactory() <span class="hljs-punctuation">&#123;</span><br>        if (configPath == <span class="hljs-literal"><span class="hljs-keyword">null</span></span> || configPath.isEmpty()) <span class="hljs-punctuation">&#123;</span><br>            throw new RuntimeException(<span class="hljs-string">&quot;配置文件路径不合法==========&quot;</span>);<br>        <span class="hljs-punctuation">&#125;</span><br>        if (this.mybatisMapperParser == <span class="hljs-literal"><span class="hljs-keyword">null</span></span> || this.mybatisConfigurationParser == <span class="hljs-literal"><span class="hljs-keyword">null</span></span>) <span class="hljs-punctuation">&#123;</span><br>            throw new RuntimeException(<span class="hljs-string">&quot;缺少解析器=======&quot;</span>);<br>        <span class="hljs-punctuation">&#125;</span><br>        MybatisConfiguration mybatisConfiguration = mybatisConfigurationParser.parser(configPath);<br>        List&lt;String&gt; mapperPaths = mybatisConfiguration.getMapperPaths();<br>        for (String mapperPath <span class="hljs-punctuation">:</span> mapperPaths) <span class="hljs-punctuation">&#123;</span><br>            MybatisMapperXmlConfiguration mybatisMapperXmlConfiguration = this.mybatisMapperParser.parseMapper(mapperPath);<br>            List&lt;MybatisSqlStatement&gt; mybatisSqlStatements = mybatisMapperXmlConfiguration.getMybatisSqlStatements();<br>            for (MybatisSqlStatement mybatisSqlStatement <span class="hljs-punctuation">:</span> mybatisSqlStatements) <span class="hljs-punctuation">&#123;</span><br>                String mapperMethod = mybatisSqlStatement.getNamespace() + <span class="hljs-string">&quot;.&quot;</span> + mybatisSqlStatement.getId();<br>                mybatisConfiguration.putMapperMethod2MybatisSqlStatement(mapperMethod<span class="hljs-punctuation">,</span> mybatisSqlStatement);<br>            <span class="hljs-punctuation">&#125;</span><br>            mybatisConfiguration.putMapperXmlConfiguration(mybatisMapperXmlConfiguration.getMapperName()<span class="hljs-punctuation">,</span> mybatisMapperXmlConfiguration);<br>        <span class="hljs-punctuation">&#125;</span><br><br>        MapperProxyFactory mapperProxyFactory = new MapperProxyFactory(mybatisConfiguration);<br>        return new DefaultMybatisSqlSessionFactory(mapperProxyFactory);<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public MybatisSqlSessionFactoryBuilder setConfigPath(String configPath) <span class="hljs-punctuation">&#123;</span><br>        this.configPath = configPath;<br>        return this;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public MybatisSqlSessionFactoryBuilder setMybatisConfigurationParser(IMybatisConfigurationParser iMybatisConfigurationParser) <span class="hljs-punctuation">&#123;</span><br>        this.mybatisConfigurationParser = iMybatisConfigurationParser;<br>        return this;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public MybatisSqlSessionFactoryBuilder setMybatisMapperParser(IMybatisMapperParser iMybatisMapperParser) <span class="hljs-punctuation">&#123;</span><br>        this.mybatisMapperParser = iMybatisMapperParser;<br>        return this;<br>    <span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span><br><br></code></pre></td></tr></table></figure>
+<p>之前对于结果的解析，我们都是在DefaultMybatisSqlSession类中进行的，但是现在我们发现，结果的类型逐渐变得多样性了，如果都放在DefaultMybatisSqlSession类中，会使这个类十分庞大，因此，我们将解析结果的职责， 提取到IMybatisResultParser类中，首先定义该接口：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs json">package com.yang.mybatis.execute;<br><br>import com.yang.mybatis.execute.request.MybatisResultParserRequest;<br><br>import java.sql.SQLException;<br><br>public interface IMybatisResultParser <span class="hljs-punctuation">&#123;</span><br>    final static int ONE_COLUMNE = <span class="hljs-number">0</span>;<br>    final static int RESULT_TYPE = <span class="hljs-number">1</span>;<br>    final static int RESULT_MAP = <span class="hljs-number">2</span>;<br><br>    &lt;T&gt; T parseResult(MybatisResultParserRequest mybatisResultParserRequest) throws SQLException;<br><span class="hljs-punctuation">&#125;</span><br><br></code></pre></td></tr></table></figure>
+<p>MybatisResultParserRequest:</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><code class="hljs json">package com.yang.mybatis.execute.request;<br><br>import com.yang.mybatis.config.MybatisMapperXmlConfiguration;<br>import com.yang.mybatis.config.MybatisSqlStatement;<br><br>import java.io.Serializable;<br>import java.sql.ResultSet;<br><br>public class MybatisResultParserRequest implements Serializable <span class="hljs-punctuation">&#123;</span><br>    private ResultSet resultSet;<br>    private MybatisSqlStatement mybatisSqlStatement;<br>    private MybatisMapperXmlConfiguration mybatisMapperXmlConfiguration;<br><br>    public MybatisResultParserRequest() <span class="hljs-punctuation">&#123;</span><br>    <span class="hljs-punctuation">&#125;</span><br><br><br>    public ResultSet getResultSet() <span class="hljs-punctuation">&#123;</span><br>        return resultSet;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public void setResultSet(ResultSet resultSet) <span class="hljs-punctuation">&#123;</span><br>        this.resultSet = resultSet;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public MybatisSqlStatement getMybatisSqlStatement() <span class="hljs-punctuation">&#123;</span><br>        return mybatisSqlStatement;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public void setMybatisSqlStatement(MybatisSqlStatement mybatisSqlStatement) <span class="hljs-punctuation">&#123;</span><br>        this.mybatisSqlStatement = mybatisSqlStatement;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public MybatisMapperXmlConfiguration getMybatisMapperXmlConfiguration() <span class="hljs-punctuation">&#123;</span><br>        return mybatisMapperXmlConfiguration;<br>    <span class="hljs-punctuation">&#125;</span><br><br>    public void setMybatisMapperXmlConfiguration(MybatisMapperXmlConfiguration mybatisMapperXmlConfiguration) <span class="hljs-punctuation">&#123;</span><br>        this.mybatisMapperXmlConfiguration = mybatisMapperXmlConfiguration;<br>    <span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span><br><br></code></pre></td></tr></table></figure>
+<p>然后定义其具体实现：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br></pre></td><td class="code"><pre><code class="hljs json">package com.yang.mybatis.execute;<br><br>import com.google.common.base.CaseFormat;<br>import com.yang.mybatis.config.MybatisMapperXmlConfiguration;<br>import com.yang.mybatis.config.MybatisResultMap;<br>import com.yang.mybatis.config.MybatisResultMapProperty;<br>import com.yang.mybatis.config.MybatisSqlStatement;<br>import com.yang.mybatis.execute.request.MybatisResultParserRequest;<br>import org.apache.commons.lang3.StringUtils;<br><br>import java.lang.reflect.Field;<br>import java.sql.ResultSet;<br>import java.sql.SQLException;<br>import java.util.HashMap;<br>import java.util.Map;<br>import java.util.stream.Collectors;<br><br>public class DefaultMybatisResultParser implements IMybatisResultParser <span class="hljs-punctuation">&#123;</span><br>    @Override<br>    public &lt;T&gt; T parseResult(MybatisResultParserRequest mybatisResultParserRequest) throws SQLException <span class="hljs-punctuation">&#123;</span><br>        ResultSet resultSet = mybatisResultParserRequest.getResultSet();<br>        if (resultSet == <span class="hljs-literal"><span class="hljs-keyword">null</span></span>) <span class="hljs-punctuation">&#123;</span><br>            return <span class="hljs-literal"><span class="hljs-keyword">null</span></span>;<br>        <span class="hljs-punctuation">&#125;</span><br>        MybatisSqlStatement mybatisSqlStatement = mybatisResultParserRequest.getMybatisSqlStatement();<br>        MybatisMapperXmlConfiguration mybatisMapperXmlConfiguration = mybatisResultParserRequest.getMybatisMapperXmlConfiguration();<br>        int resultTypeCode = parseResultTypeCode(mybatisSqlStatement);<br>        switch (resultTypeCode) <span class="hljs-punctuation">&#123;</span><br>            case ONE_COLUMNE<span class="hljs-punctuation">:</span><br>                return parseResultOfOneColumn(resultSet<span class="hljs-punctuation">,</span> mybatisSqlStatement);<br>            case RESULT_TYPE<span class="hljs-punctuation">:</span><br>                return parseResultOfResultType(resultSet<span class="hljs-punctuation">,</span> mybatisSqlStatement);<br>        <span class="hljs-punctuation">&#125;</span><br>        return parseResultOfResultMap(resultSet<span class="hljs-punctuation">,</span> mybatisSqlStatement<span class="hljs-punctuation">,</span> mybatisMapperXmlConfiguration);<br>    <span class="hljs-punctuation">&#125;</span><br><br>    private &lt;T&gt; T parseResultOfResultMap(ResultSet resultSet<span class="hljs-punctuation">,</span> MybatisSqlStatement mybatisSqlStatement<span class="hljs-punctuation">,</span><br>                                         MybatisMapperXmlConfiguration mybatisMapperXmlConfiguration) throws SQLException <span class="hljs-punctuation">&#123;</span><br>        String resultMap = mybatisSqlStatement.getResultMap();<br><br>        MybatisResultMap mybatisResultMap = mybatisMapperXmlConfiguration.getMybatisResultMap(resultMap);<br><br>        String classType = mybatisResultMap.getType();<br>        Map&lt;String<span class="hljs-punctuation">,</span> String&gt; fieldName2ColumnNameMap = mybatisResultMap.getProperties()<br>                .stream()<br>                .collect(Collectors.toMap(MybatisResultMapProperty<span class="hljs-punctuation">:</span><span class="hljs-punctuation">:</span>getProperty<span class="hljs-punctuation">,</span> MybatisResultMapProperty<span class="hljs-punctuation">:</span><span class="hljs-punctuation">:</span>getColumn));<br><br>        return parseResultOfClassAndFields(resultSet<span class="hljs-punctuation">,</span> classType<span class="hljs-punctuation">,</span> fieldName2ColumnNameMap);<br>    <span class="hljs-punctuation">&#125;</span><br><br>    private &lt;T&gt; T parseResultOfResultType(ResultSet resultSet<span class="hljs-punctuation">,</span> MybatisSqlStatement mybatisSqlStatement) throws SQLException <span class="hljs-punctuation">&#123;</span><br>        String resultType = mybatisSqlStatement.getResultType();<br><br>        try <span class="hljs-punctuation">&#123;</span><br>            Class&lt;?&gt; aClass = Class.forName(resultType);<br>            Field<span class="hljs-punctuation">[</span><span class="hljs-punctuation">]</span> fields = aClass.getDeclaredFields();<br>            Map&lt;String<span class="hljs-punctuation">,</span> String&gt; fieldName2ColumnNameMap = new HashMap&lt;&gt;();<br>            for (Field field <span class="hljs-punctuation">:</span> fields) <span class="hljs-punctuation">&#123;</span><br>                <span class="hljs-comment">// 驼峰命名转下划线</span><br>                String columnName = CaseFormat.LOWER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE<span class="hljs-punctuation">,</span> field.getName());<br>                fieldName2ColumnNameMap.put(field.getName()<span class="hljs-punctuation">,</span> columnName);<br>            <span class="hljs-punctuation">&#125;</span><br><br>            return parseResultOfClassAndFields(resultSet<span class="hljs-punctuation">,</span> resultType<span class="hljs-punctuation">,</span> fieldName2ColumnNameMap);<br>        <span class="hljs-punctuation">&#125;</span> catch (ClassNotFoundException e) <span class="hljs-punctuation">&#123;</span><br>            throw new RuntimeException(e);<br>        <span class="hljs-punctuation">&#125;</span><br>    <span class="hljs-punctuation">&#125;</span><br><br>    private &lt;T&gt; T parseResultOfClassAndFields(ResultSet resultSet<span class="hljs-punctuation">,</span> String classType<span class="hljs-punctuation">,</span> Map&lt;String<span class="hljs-punctuation">,</span> String&gt; fieldName2ColumnNameMap ) throws SQLException <span class="hljs-punctuation">&#123;</span><br>        try <span class="hljs-punctuation">&#123;</span><br>            Class&lt;?&gt; aClass = Class.forName(classType);<br>            Field<span class="hljs-punctuation">[</span><span class="hljs-punctuation">]</span> fields = aClass.getDeclaredFields();<br><br>            Map&lt;String<span class="hljs-punctuation">,</span> Field&gt; fieldName2FieldMap = new HashMap&lt;&gt;();<br>            for (Field field <span class="hljs-punctuation">:</span> fields) <span class="hljs-punctuation">&#123;</span><br>                fieldName2FieldMap.put(field.getName()<span class="hljs-punctuation">,</span> field);<br>            <span class="hljs-punctuation">&#125;</span><br><br>            Object result = aClass.newInstance();<br>            while (resultSet.next()) <span class="hljs-punctuation">&#123;</span><br>                for (Map.Entry&lt;String<span class="hljs-punctuation">,</span> String&gt; entry <span class="hljs-punctuation">:</span> fieldName2ColumnNameMap.entrySet()) <span class="hljs-punctuation">&#123;</span><br>                    String fieldName = entry.getKey();<br>                    String columnName = entry.getValue();<br><br>                    Object columnValue = resultSet.getObject(columnName);<br>                    Field field = fieldName2FieldMap.get(fieldName);<br>                    field.setAccessible(<span class="hljs-literal"><span class="hljs-keyword">true</span></span>);<br>                    field.set(result<span class="hljs-punctuation">,</span> columnValue);<br>                <span class="hljs-punctuation">&#125;</span><br>            <span class="hljs-punctuation">&#125;</span><br>            return (T)result;<br>        <span class="hljs-punctuation">&#125;</span> catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) <span class="hljs-punctuation">&#123;</span><br>            throw new RuntimeException(e);<br>        <span class="hljs-punctuation">&#125;</span><br>    <span class="hljs-punctuation">&#125;</span><br><br>    private &lt;T&gt; T parseResultOfOneColumn(ResultSet resultSet<span class="hljs-punctuation">,</span> MybatisSqlStatement mybatisSqlStatement) throws SQLException <span class="hljs-punctuation">&#123;</span><br>        return (T) resultSet.getObject(<span class="hljs-number">1</span>);<br>    <span class="hljs-punctuation">&#125;</span><br><br>    private int parseResultTypeCode(MybatisSqlStatement mybatisSqlStatement) <span class="hljs-punctuation">&#123;</span><br>        String resultType = mybatisSqlStatement.getResultType();<br>        String resultMap = mybatisSqlStatement.getResultMap();<br>        if (StringUtils.isEmpty(resultType) &amp;&amp; StringUtils.isEmpty(resultMap)) <span class="hljs-punctuation">&#123;</span><br>            return ONE_COLUMNE;<br>        <span class="hljs-punctuation">&#125;</span><br>        if (StringUtils.isNotEmpty(resultType) &amp;&amp; StringUtils.isNotEmpty(resultMap)) <span class="hljs-punctuation">&#123;</span><br>            throw new RuntimeException(<span class="hljs-string">&quot;resultType和resultMap不能同时存在&quot;</span>);<br>        <span class="hljs-punctuation">&#125;</span><br>        if (StringUtils.isNotEmpty(resultType)) <span class="hljs-punctuation">&#123;</span><br>            return RESULT_TYPE;<br>        <span class="hljs-punctuation">&#125;</span><br>        return RESULT_MAP;<br>    <span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span><br><br></code></pre></td></tr></table></figure>
+<p>最后，我们修改DefaultMybatisSqlSession类：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br></pre></td><td class="code"><pre><code class="hljs json">package com.yang.mybatis.session;<br><br>import com.yang.mybatis.config.MybatisConfiguration;<br>import com.yang.mybatis.config.MybatisEnvironment;<br>import com.yang.mybatis.config.MybatisMapperXmlConfiguration;<br>import com.yang.mybatis.config.MybatisSqlStatement;<br>import com.yang.mybatis.execute.DefaultMybatisResultParser;<br>import com.yang.mybatis.execute.IMybatisResultParser;<br>import com.yang.mybatis.execute.request.MybatisResultParserRequest;<br>import com.yang.mybatis.proxy.MapperProxyFactory;<br><br>import java.sql.Connection;<br>import java.sql.PreparedStatement;<br>import java.sql.ResultSet;<br>import java.sql.SQLException;<br>import java.util.ArrayList;<br>import java.util.List;<br>import java.util.Map;<br><br><br>public class DefaultMybatisSqlSession implements IMybatisSqlSession <span class="hljs-punctuation">&#123;</span><br>    private MapperProxyFactory mapperProxyFactory;<br>    private MybatisConfiguration mybatisConfiguration;<br><br>    private IMybatisResultParser iMybatisResultParser = new DefaultMybatisResultParser();<br><br>    public DefaultMybatisSqlSession(MapperProxyFactory mapperProxyFactory) <span class="hljs-punctuation">&#123;</span><br>        this.mapperProxyFactory = mapperProxyFactory;<br>        this.mybatisConfiguration = mapperProxyFactory.getMybatisConfiguration();<br>    <span class="hljs-punctuation">&#125;</span><br><br>    @Override<br>    public &lt;T&gt; T execute(String method<span class="hljs-punctuation">,</span> Object parameter) <span class="hljs-punctuation">&#123;</span><br>        Map&lt;String<span class="hljs-punctuation">,</span> MybatisSqlStatement&gt; mapperMethod2SqlStatementsMap = mapperProxyFactory.getMybatisConfiguration().getMapperMethod2SqlStatementsMap();<br>        MybatisSqlStatement mybatisSqlStatement = mapperMethod2SqlStatementsMap.get(method);<br><br><br>        MybatisEnvironment defaultMybatisEnvironment = this.mybatisConfiguration.getDefaultMybatisEnvironment();<br><br>        return new TransactionInvoke&lt;T&gt;() <span class="hljs-punctuation">&#123;</span><br>            @Override<br>            public T execute(Connection connection) throws SQLException <span class="hljs-punctuation">&#123;</span><br>                String rawSql = mybatisSqlStatement.getSql();<br>                List&lt;String&gt; parameterNameList = new ArrayList&lt;&gt;();<br>                String sql = extractRawSql(rawSql<span class="hljs-punctuation">,</span> parameterNameList);<br>                Object<span class="hljs-punctuation">[</span><span class="hljs-punctuation">]</span> parameters = (Object<span class="hljs-punctuation">[</span><span class="hljs-punctuation">]</span>) parameter;<br>                PreparedStatement preparedStatement = connection.prepareStatement(sql);<br>                if (parameterNameList.size() != parameters.length) <span class="hljs-punctuation">&#123;</span><br>                    throw new RuntimeException(<span class="hljs-string">&quot;SQL语句参数个数不匹配====&quot;</span>);<br>                <span class="hljs-punctuation">&#125;</span><br>                int index = <span class="hljs-number">1</span>;<br>                for (Object o <span class="hljs-punctuation">:</span> parameters) <span class="hljs-punctuation">&#123;</span><br>                    preparedStatement.setObject(index ++<span class="hljs-punctuation">,</span> o);<br>                <span class="hljs-punctuation">&#125;</span><br>                ResultSet resultSet = preparedStatement.executeQuery();<br><br>                String mapperName = mybatisSqlStatement.getNamespace();<br>                MybatisMapperXmlConfiguration mybatisMapperXmlConfiguration = mybatisConfiguration.getMybatisMapperXmlConfiguration(mapperName);<br><br>                MybatisResultParserRequest mybatisResultParserRequest = new MybatisResultParserRequest();<br>                mybatisResultParserRequest.setResultSet(resultSet);<br>                mybatisResultParserRequest.setMybatisSqlStatement(mybatisSqlStatement);<br>                mybatisResultParserRequest.setMybatisMapperXmlConfiguration(mybatisMapperXmlConfiguration);<br>                T result = iMybatisResultParser.parseResult(mybatisResultParserRequest);<br>                resultSet.close();<br>                return result;<br>            <span class="hljs-punctuation">&#125;</span><br>        <span class="hljs-punctuation">&#125;</span>.invoke(defaultMybatisEnvironment.getMybatisDataSource());<br>    <span class="hljs-punctuation">&#125;</span><br><br>    private String extractRawSql(String rawSql<span class="hljs-punctuation">,</span> List&lt;String&gt; parameterNameList) <span class="hljs-punctuation">&#123;</span><br>        StringBuilder sqlBuilder = new StringBuilder();<br>        int start = <span class="hljs-number">0</span>;<br>        int end = <span class="hljs-number">-1</span>;<br>        while ((end = rawSql.indexOf(<span class="hljs-string">&quot;#&quot;</span><span class="hljs-punctuation">,</span> start)) != <span class="hljs-number">-1</span>) <span class="hljs-punctuation">&#123;</span><br>            sqlBuilder.append(rawSql.substring(start<span class="hljs-punctuation">,</span> end - <span class="hljs-number">1</span>))<br>                    .append(<span class="hljs-string">&quot; ? &quot;</span>);<br>            int parameterStart = end + <span class="hljs-number">2</span>;<br>            int parameterEnd = rawSql.indexOf(<span class="hljs-string">&quot;&#125;&quot;</span><span class="hljs-punctuation">,</span> parameterStart);<br>            parameterNameList.add(rawSql.substring(parameterStart<span class="hljs-punctuation">,</span> parameterEnd));<br>            start = parameterEnd + <span class="hljs-number">1</span>;<br>        <span class="hljs-punctuation">&#125;</span><br>        sqlBuilder.append(rawSql.substring(start));<br><br>        return sqlBuilder.toString();<br>    <span class="hljs-punctuation">&#125;</span><br><br><br>    @Override<br>    public &lt;T&gt; T getMapper(Class&lt;T&gt; type) <span class="hljs-punctuation">&#123;</span><br>        return (T) mapperProxyFactory.newInstance(type<span class="hljs-punctuation">,</span> this);<br>    <span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span><br><br></code></pre></td></tr></table></figure>
+<p>添加测试代码，进行测试：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs json">public static void main(String<span class="hljs-punctuation">[</span><span class="hljs-punctuation">]</span> args) <span class="hljs-punctuation">&#123;</span><br>        String configPath = <span class="hljs-string">&quot;mybatis-config.xml&quot;</span>;<br>        IMybatisSqlSessionFactory mybatisSqlSessionFactory = new MybatisSqlSessionFactoryBuilder()<br>                .setMybatisConfigurationParser(new XmlMybatisConfigurationParser())<br>                .setMybatisMapperParser(new XmlMybatisMapperParser())<br>                .setConfigPath(configPath)<br>                .buildSqlSessionFactory();<br>        IMybatisSqlSession mybatisSqlSession = mybatisSqlSessionFactory.openSession();<br>        IUserMapper userMapper = mybatisSqlSession.getMapper(IUserMapper.class);<br>        IdUserNameVO idUserNameVO = userMapper.queryIdUserNameVOById(<span class="hljs-number">1</span>);<br>        System.out.println(idUserNameVO.getId());<br>        System.out.println(idUserNameVO.getUserName());<br>    <span class="hljs-punctuation">&#125;</span><br><br></code></pre></td></tr></table></figure>
+<p>测试结果如下：</p>
+<img src="/2024/05/05/%E6%89%8B%E6%92%B8Mybatis%EF%BC%88%E5%9B%9B%EF%BC%89%E2%80%94%E2%80%94%E8%BF%9E%E6%8E%A5%E6%95%B0%E6%8D%AE%E5%BA%93%E8%BF%9B%E8%A1%8C%E7%AE%80%E5%8D%95%E6%9F%A5%E8%AF%A2/3.png" srcset="/img/loading.gif" lazyload class="">
+
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Mybatis/" class="print-no-link">#-Mybatis</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>手撸Mybatis（四）——连接数据库进行简单查询</div>
+      <div>https://cxydhi.github.io/2024/05/05/手撸Mybatis（四）——连接数据库进行简单查询/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>沉河不浮</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年5月5日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2024/05/05/%E6%89%8B%E6%92%B8Mybatis%EF%BC%88%E4%BA%94%EF%BC%89%E2%80%94%E2%80%94%E8%BF%9E%E6%8E%A5%E6%95%B0%E6%8D%AE%E5%BA%93%E8%BF%9B%E8%A1%8Cinsert%EF%BC%8Cupdate%E5%92%8Cdelete/" title="手撸Mybatis（五）——连接数据库进行insert，update和delete">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">手撸Mybatis（五）——连接数据库进行insert，update和delete</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/05/05/%E6%89%8B%E6%92%B8Mybatis%EF%BC%88%E4%B8%89%EF%BC%89%E2%80%94%E2%80%94%E6%94%B6%E6%95%9BSQL%E6%93%8D%E4%BD%9C%E5%88%B0SqlSession/" title="手撸Mybatis（三）——收敛SQL操作到SqlSession">
+                        <span class="hidden-mobile">手撸Mybatis（三）——收敛SQL操作到SqlSession</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

@@ -224,15 +224,15 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
-        <a href="/2024/05/04/%E6%89%8B%E6%92%B8Mybatis%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E2%80%94%E9%85%8D%E7%BD%AE%E9%A1%B9%E7%9A%84%E8%8E%B7%E5%8F%96/" target="_self">
-          手撸Mybatis（二）——配置项的获取
+        <a href="/2024/05/05/%E6%89%8B%E6%92%B8Mybatis%EF%BC%88%E4%BA%94%EF%BC%89%E2%80%94%E2%80%94%E8%BF%9E%E6%8E%A5%E6%95%B0%E6%8D%AE%E5%BA%93%E8%BF%9B%E8%A1%8Cinsert%EF%BC%8Cupdate%E5%92%8Cdelete/" target="_self">
+          手撸Mybatis（五）——连接数据库进行insert，update和delete
         </a>
       </h2>
 
       
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/05/04/%E6%89%8B%E6%92%B8Mybatis%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E2%80%94%E9%85%8D%E7%BD%AE%E9%A1%B9%E7%9A%84%E8%8E%B7%E5%8F%96/" target="_self">
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/05/05/%E6%89%8B%E6%92%B8Mybatis%EF%BC%88%E4%BA%94%EF%BC%89%E2%80%94%E2%80%94%E8%BF%9E%E6%8E%A5%E6%95%B0%E6%8D%AE%E5%BA%93%E8%BF%9B%E8%A1%8Cinsert%EF%BC%8Cupdate%E5%92%8Cdelete/" target="_self">
         <div>
-          配置项解析在mybatis中，一般我们会定义一个mapper-config.xml文件，来配置数据库连接的相关信息，以及我们的mapperxml文件存放目录。在本章，我们会读取这些文件，将其配置信息进行解析。因为涉及到xml的解析，因此，我们先添加dom4j的依赖，以方便后续解析xml 12345&lt;dependency&gt;&lt;groupId&gt;org.dom4j&lt;/grou
+          引言在上一章中，我们成功实现了数据库的连接，以及单个字段的查询、resultType映射查询、resultMap映射查询。在本章，我们将讲解关于增加、修改和删除操作。 insert操作首先，我们修改IUserMapper类，添加insertUser接口 1234567891011121314package com.yang.mybatis.test;public interface IUserMa
         </div>
       </a>
 
@@ -240,8 +240,8 @@
         
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
-            <time datetime="2024-05-04 17:51" pubdate>
-              2024-05-04
+            <time datetime="2024-05-05 10:13" pubdate>
+              2024-05-05
             </time>
           </div>
         
@@ -250,7 +250,7 @@
           <div class="post-meta">
             <i class="iconfont icon-tags"></i>
             
-              <a href="/tags/Mybatis/">#Mybatis</a>
+              <a href="/tags/Mybatis/">#-Mybatis</a>
             
           </div>
         
@@ -264,13 +264,133 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
-        <a href="/2024/05/04/%E6%89%8B%E6%92%B8Mybatis%EF%BC%88%E4%B8%80%EF%BC%89%E2%80%94%E2%80%94%E4%BB%A3%E7%90%86mapper/" target="_self">
+        <a href="/2024/05/05/%E6%89%8B%E6%92%B8Mybatis%EF%BC%88%E5%9B%9B%EF%BC%89%E2%80%94%E2%80%94%E8%BF%9E%E6%8E%A5%E6%95%B0%E6%8D%AE%E5%BA%93%E8%BF%9B%E8%A1%8C%E7%AE%80%E5%8D%95%E6%9F%A5%E8%AF%A2/" target="_self">
+          手撸Mybatis（四）——连接数据库进行简单查询
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/05/05/%E6%89%8B%E6%92%B8Mybatis%EF%BC%88%E5%9B%9B%EF%BC%89%E2%80%94%E2%80%94%E8%BF%9E%E6%8E%A5%E6%95%B0%E6%8D%AE%E5%BA%93%E8%BF%9B%E8%A1%8C%E7%AE%80%E5%8D%95%E6%9F%A5%E8%AF%A2/" target="_self">
+        <div>
+          添加数据库操作模板对于JDBC操作，一般包括以下几个步骤：1）注册驱动2）建立连接3）执行sql语句4）处理结果5）释放资源上面这些步骤，真正和我们处理相关的，是第三步和第四步，其他步骤，都是通用的逻辑，因此，我们可以将这些步骤抽象成一个模板方法类，其内容如下： 12345678910111213141516171819202122232425262728293031323334353637383
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-05-05 10:13" pubdate>
+              2024-05-05
+            </time>
+          </div>
+        
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Mybatis/">#-Mybatis</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2024/05/05/%E6%89%8B%E6%92%B8Mybatis%EF%BC%88%E4%B8%89%EF%BC%89%E2%80%94%E2%80%94%E6%94%B6%E6%95%9BSQL%E6%93%8D%E4%BD%9C%E5%88%B0SqlSession/" target="_self">
+          手撸Mybatis（三）——收敛SQL操作到SqlSession
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/05/05/%E6%89%8B%E6%92%B8Mybatis%EF%BC%88%E4%B8%89%EF%BC%89%E2%80%94%E2%80%94%E6%94%B6%E6%95%9BSQL%E6%93%8D%E4%BD%9C%E5%88%B0SqlSession/" target="_self">
+        <div>
+          引言在上一章中，我们实现了读取mapper配置并构造相关的mapper代理对象，读取mapper.xml文件中的sql信息等操作，现在，在上一章的基础上，我们接着开始链接数据库，通过封装JDBC，来实现我们数据库操作。 数据库准备我们创建一个user表，用于后续进行测试，user表的结构如下图所示：  user表的内容如下：  添加User类我们根据表结构，创建对应的user类，user类的结构如
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-05-05 10:12" pubdate>
+              2024-05-05
+            </time>
+          </div>
+        
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Mybatis/">#-Mybatis</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2024/05/05/%E6%89%8B%E6%92%B8Mybatis%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E2%80%94%E9%85%8D%E7%BD%AE%E9%A1%B9%E7%9A%84%E8%8E%B7%E5%8F%96/" target="_self">
+          手撸Mybatis（二）——配置项的获取
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/05/05/%E6%89%8B%E6%92%B8Mybatis%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E2%80%94%E9%85%8D%E7%BD%AE%E9%A1%B9%E7%9A%84%E8%8E%B7%E5%8F%96/" target="_self">
+        <div>
+          配置项解析在mybatis中，一般我们会定义一个mapper-config.xml文件，来配置数据库连接的相关信息，以及我们的mapperxml文件存放目录。在本章，我们会读取这些文件，将其配置信息进行解析。因为涉及到xml的解析，因此，我们先添加dom4j的依赖，以方便后续解析xml 12345&lt;dependency&gt;            &lt;groupId&gt;org.do
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-05-05 10:12" pubdate>
+              2024-05-05
+            </time>
+          </div>
+        
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Mybatis/">#-Mybatis</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2024/05/05/%E6%89%8B%E6%92%B8Mybatis%EF%BC%88%E4%B8%80%EF%BC%89%E2%80%94%E2%80%94%E4%BB%A3%E7%90%86mapper/" target="_self">
           手撸Mybatis（一）——代理mapper
         </a>
       </h2>
 
       
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/05/04/%E6%89%8B%E6%92%B8Mybatis%EF%BC%88%E4%B8%80%EF%BC%89%E2%80%94%E2%80%94%E4%BB%A3%E7%90%86mapper/" target="_self">
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/05/05/%E6%89%8B%E6%92%B8Mybatis%EF%BC%88%E4%B8%80%EF%BC%89%E2%80%94%E2%80%94%E4%BB%A3%E7%90%86mapper/" target="_self">
         <div>
           引言最近刚写完毕设，闲来无事，看到网上有一个手撸Mybatis的教程，于是想自己实现一个简易版的Mybatis。 创建简单的映射器代理工厂在使用mybatis的时候，我们一般只需要定义mapper的接口，并添加相应的@Mapper注解，然后实现对应的xml文件即可，而不需要对mapper接口进行具体的实现。其实本质上，这些mapper接口是有实现的，但不是我们手动通过implement来实现，而是
         </div>
@@ -280,8 +400,8 @@
         
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
-            <time datetime="2024-05-04 14:52" pubdate>
-              2024-05-04
+            <time datetime="2024-05-05 10:04" pubdate>
+              2024-05-05
             </time>
           </div>
         
@@ -290,7 +410,7 @@
           <div class="post-meta">
             <i class="iconfont icon-tags"></i>
             
-              <a href="/tags/Mybatis/">#Mybatis</a>
+              <a href="/tags/Mybatis/">#-Mybatis</a>
             
           </div>
         
@@ -508,137 +628,11 @@
     </article>
   </div>
 
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2024/04/03/MongoDB%E5%AD%A6%E4%B9%A01%E2%80%94MongoDB%E7%AE%80%E4%BB%8B/" target="_self">
-          MongoDB学习1—MongoDB简介
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/04/03/MongoDB%E5%AD%A6%E4%B9%A01%E2%80%94MongoDB%E7%AE%80%E4%BB%8B/" target="_self">
-        <div>
-          1. MongoDB介绍1.1. 什么是MongoDBMongoDB是由C++语言编写的，是一个基于分布式文件存储的开源数据库系统，旨在为WEB应用提供可扩展的高性能数据存储解决方案。它将数据存储为一个文档，数据结构由键值(key&#x3D;&gt;value）对组成，MongoDB文档类似于JSON对象，字段值可以包含其他文档，数组即文档数组。  1.2. 特点MongoDB具有以下特点：  文
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2024-04-03 13:58" pubdate>
-              2024-04-03
-            </time>
-          </div>
-        
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/">#中间件</a>
-            
-              <a href="/tags/MongoDB/">#MongoDB</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/" target="_self">
-          Redis学习6—Redis分布式锁
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/04/02/Redis%E5%AD%A6%E4%B9%A06%E2%80%94Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/" target="_self">
-        <div>
-          1. 引言1.1. 分布式锁分布式锁（Distributed Lock）是一种用于分布式系统中实现互斥访问的机制，在分布式系统中，多个节点同时访问共享资源可能导致数据不一致或竞态条件的问题，分布式锁通过协调多个节点之间的访问，确保在同一时间只有一个节点能获得对共享资源的独占访问权限，从而解决并发访问问题。 1.2. 分布式锁实现方式常用的分布式锁实现方式有：1）基于数据库的分布式锁（乐观锁)：使用
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2024-04-02 21:37" pubdate>
-              2024-04-02
-            </time>
-          </div>
-        
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/">#中间件</a>
-            
-              <a href="/tags/Redis/">#Redis</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2024/04/02/Redis%E5%AD%A6%E4%B9%A05-Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%AD%BE%E5%88%B0/" target="_self">
-          Redis学习5-Redis应用之签到
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/04/02/Redis%E5%AD%A6%E4%B9%A05-Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%AD%BE%E5%88%B0/" target="_self">
-        <div>
-          1. Redis位图bitMap位图由一系列二进制位组成，每个位可以被设置为1或0，当我们在处理需要高效存储和操作大量二进制位数据的适合，位图是一个非常有用的工具。位图操作命令有：  SETBIT：设置位图中指定位置的位的值。可以将位设置为 0 或 1。 GETBIT：获取位图中指定位置的位的值。 BITCOUNT：计算位图中置为 1 的位的数量。 BITOP：对多个位图执行逻辑运算（AND、OR
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2024-04-02 21:34" pubdate>
-              2024-04-02
-            </time>
-          </div>
-        
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/">#中间件</a>
-            
-              <a href="/tags/Redis/">#Redis</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
 
 
   <nav aria-label="navigation">
     <span class="pagination" id="pagination">
-      <span class="page-number current">1</span><a class="page-number" href="/page/2/#board">2</a><a class="extend next" rel="next" href="/page/2/#board"><i class="iconfont icon-arrowright"></i></a>
+      <span class="page-number current">1</span><a class="page-number" href="/page/2/#board">2</a><a class="page-number" href="/page/3/#board">3</a><a class="extend next" rel="next" href="/page/2/#board"><i class="iconfont icon-arrowright"></i></a>
     </span>
   </nav>
 
