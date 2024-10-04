@@ -224,6 +224,86 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
+        <a href="/2024/05/05/%E6%89%8B%E6%92%B8Mybatis%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E2%80%94%E9%85%8D%E7%BD%AE%E9%A1%B9%E7%9A%84%E8%8E%B7%E5%8F%96/" target="_self">
+          手撸Mybatis（二）——配置项的获取
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/05/05/%E6%89%8B%E6%92%B8Mybatis%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E2%80%94%E9%85%8D%E7%BD%AE%E9%A1%B9%E7%9A%84%E8%8E%B7%E5%8F%96/" target="_self">
+        <div>
+          配置项解析在mybatis中，一般我们会定义一个mapper-config.xml文件，来配置数据库连接的相关信息，以及我们的mapperxml文件存放目录。在本章，我们会读取这些文件，将其配置信息进行解析。因为涉及到xml的解析，因此，我们先添加dom4j的依赖，以方便后续解析xml 12345&lt;dependency&gt;            &lt;groupId&gt;org.do
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-05-05 10:12" pubdate>
+              2024-05-05
+            </time>
+          </div>
+        
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Mybatis/">#-Mybatis</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2024/05/05/%E6%89%8B%E6%92%B8Mybatis%EF%BC%88%E4%B8%80%EF%BC%89%E2%80%94%E2%80%94%E4%BB%A3%E7%90%86mapper/" target="_self">
+          手撸Mybatis（一）——代理mapper
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/05/05/%E6%89%8B%E6%92%B8Mybatis%EF%BC%88%E4%B8%80%EF%BC%89%E2%80%94%E2%80%94%E4%BB%A3%E7%90%86mapper/" target="_self">
+        <div>
+          引言最近刚写完毕设，闲来无事，看到网上有一个手撸Mybatis的教程，于是想自己实现一个简易版的Mybatis。 创建简单的映射器代理工厂在使用mybatis的时候，我们一般只需要定义mapper的接口，并添加相应的@Mapper注解，然后实现对应的xml文件即可，而不需要对mapper接口进行具体的实现。其实本质上，这些mapper接口是有实现的，但不是我们手动通过implement来实现，而是
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-05-05 10:04" pubdate>
+              2024-05-05
+            </time>
+          </div>
+        
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Mybatis/">#-Mybatis</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
         <a href="/2024/04/03/SpringSecurity%E5%AD%A6%E4%B9%A02%E2%80%94SpringSecurity%E6%8E%88%E6%9D%83/" target="_self">
           SpringSecurity学习2—SpringSecurity授权
         </a>
@@ -535,90 +615,6 @@
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
             <time datetime="2024-04-02 21:34" pubdate>
-              2024-04-02
-            </time>
-          </div>
-        
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/">#中间件</a>
-            
-              <a href="/tags/Redis/">#Redis</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2024/04/02/Redis%E5%AD%A6%E4%B9%A04%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E9%99%90%E6%B5%81/" target="_self">
-          Redis学习4—Redis应用之限流
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/04/02/Redis%E5%AD%A6%E4%B9%A04%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E9%99%90%E6%B5%81/" target="_self">
-        <div>
-          1. 引言Redis作为一个内存数据库其读写速度非常快，并且支持原子操作，这使得它非常适合处理频繁的请求，一般情况下，我们会使用Redis作为缓存数据库，但处理做缓存数据库之外，Redis的应用还十分广泛，比如这一节，我们将讲解Redis在限流方面的应用。 2. 通过setnx实现限流我们通过切面，来获取某给接口在一段时间内的请求次数，当请求次数超过某个值时，抛出限流异常，直接返回，不执行业务逻辑
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2024-04-02 21:27" pubdate>
-              2024-04-02
-            </time>
-          </div>
-        
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/">#中间件</a>
-            
-              <a href="/tags/Redis/">#Redis</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/" target="_self">
-          Redis学习3—Redis应用之缓存
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/04/02/Redis%E5%AD%A6%E4%B9%A03%E2%80%94Redis%E5%BA%94%E7%94%A8%E4%B9%8B%E7%BC%93%E5%AD%98/" target="_self">
-        <div>
-          1. 引言1.1. 缓存的意义Redis作为一个NoSql数据库，被广泛的当作缓存数据库使用，所谓缓存，就是数据交换的缓冲区。使用缓存的具体原因有：  缓存数据存储于代码中，而代码运行在内存中，内存的读写性能远高于磁盘，通过缓存，可以大大降低用户访问并发量带来的服务器读写压力。 实际开发过程中，企业的数据量，少则几十万，多则上千万，如此大的数据量，如果没有缓存来作为“避震器”，系统是几乎撑不住的，
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2024-04-02 21:12" pubdate>
               2024-04-02
             </time>
           </div>

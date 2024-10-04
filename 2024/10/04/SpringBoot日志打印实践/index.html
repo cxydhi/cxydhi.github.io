@@ -1,0 +1,687 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="沉河不浮">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="背景在项目当中，我们经常需要打印一些日志埋点信息，这些日志埋点信息，在后续软件的运维、稳定性建设中发挥了巨大的作用：  问题追踪：通过埋点日志中的关键信息，帮助定位系统异常原因 系统监控：通过日志，监控系统的运行情况，包括性能指标、访问频率、错误等 数据分析：分析用户行为、系统性能和业务趋势等 调试：通过查看日志，帮助开发人员了解程序在执行过程中的状态和行为  SpringBoot整合Logbac">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SpringBoot日志打印实践">
+<meta property="og:url" content="https://cxydhi.github.io/2024/10/04/SpringBoot%E6%97%A5%E5%BF%97%E6%89%93%E5%8D%B0%E5%AE%9E%E8%B7%B5/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="背景在项目当中，我们经常需要打印一些日志埋点信息，这些日志埋点信息，在后续软件的运维、稳定性建设中发挥了巨大的作用：  问题追踪：通过埋点日志中的关键信息，帮助定位系统异常原因 系统监控：通过日志，监控系统的运行情况，包括性能指标、访问频率、错误等 数据分析：分析用户行为、系统性能和业务趋势等 调试：通过查看日志，帮助开发人员了解程序在执行过程中的状态和行为  SpringBoot整合Logbac">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cxydhi.github.io/2024/10/04/SpringBoot%E6%97%A5%E5%BF%97%E6%89%93%E5%8D%B0%E5%AE%9E%E8%B7%B5/1.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/10/04/SpringBoot%E6%97%A5%E5%BF%97%E6%89%93%E5%8D%B0%E5%AE%9E%E8%B7%B5/2.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/10/04/SpringBoot%E6%97%A5%E5%BF%97%E6%89%93%E5%8D%B0%E5%AE%9E%E8%B7%B5/3.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/10/04/SpringBoot%E6%97%A5%E5%BF%97%E6%89%93%E5%8D%B0%E5%AE%9E%E8%B7%B5/4.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/10/04/SpringBoot%E6%97%A5%E5%BF%97%E6%89%93%E5%8D%B0%E5%AE%9E%E8%B7%B5/5.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/10/04/SpringBoot%E6%97%A5%E5%BF%97%E6%89%93%E5%8D%B0%E5%AE%9E%E8%B7%B5/6.png">
+<meta property="article:published_time" content="2024-10-04T06:43:13.000Z">
+<meta property="article:modified_time" content="2024-10-04T06:46:16.518Z">
+<meta property="article:author" content="沉河不浮">
+<meta property="article:tag" content="工作积累">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://cxydhi.github.io/2024/10/04/SpringBoot%E6%97%A5%E5%BF%97%E6%89%93%E5%8D%B0%E5%AE%9E%E8%B7%B5/1.png">
+  
+  
+  
+  <title>SpringBoot日志打印实践 - Hexo</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"cxydhi.github.io","root":"/","version":"1.9.5","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"enable":true,"app_id":"vlIS4CUIvKuiH8sZ3Zhpo4lm-gzGzoHsz","app_key":"1RITqHwIHvFr7l7Dsjhm6qRx","server_url":"https://vlis4cui.lc-cn-n1-shared.com","path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Fluid</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="SpringBoot日志打印实践"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-10-04 14:43" pubdate>
+          2024年10月4日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          16k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          132 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">SpringBoot日志打印实践</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p>在项目当中，我们经常需要打印一些日志埋点信息，这些日志埋点信息，在后续软件的运维、稳定性建设中发挥了巨大的作用：</p>
+<ul>
+<li>问题追踪：通过埋点日志中的关键信息，帮助定位系统异常原因</li>
+<li>系统监控：通过日志，监控系统的运行情况，包括性能指标、访问频率、错误等</li>
+<li>数据分析：分析用户行为、系统性能和业务趋势等</li>
+<li>调试：通过查看日志，帮助开发人员了解程序在执行过程中的状态和行为</li>
+</ul>
+<h3 id="SpringBoot整合Logback实现日志打印"><a href="#SpringBoot整合Logback实现日志打印" class="headerlink" title="SpringBoot整合Logback实现日志打印"></a>SpringBoot整合Logback实现日志打印</h3><p>SpringBoot默认使用Slf4j作为日志门面，并集成Logback作为日志实现。要在springboot中实现日志打印，只需要引入下列依赖：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs python">&lt;dependency&gt;<br>    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;<br>    &lt;artifactId&gt;spring-boot-starter-logging&lt;/artifactId&gt;<br>&lt;/dependency&gt;<br></code></pre></td></tr></table></figure>
+
+<p>然后在配置文件中，配置对应的日志级别：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs python">logging:<br>  level:<br>    root: INFO<br></code></pre></td></tr></table></figure>
+
+<p>对某些特定的包，需要指定日志级别，则配置如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs python">logging:<br>    level:<br>        com.example.demo: DEBUG<br></code></pre></td></tr></table></figure>
+
+<p>最后，我们创建logback-spring.xml，来自定义日志的配置信息，包括日志输出文件、日志格式等</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs python">&lt;?xml version=<span class="hljs-string">&quot;1.0&quot;</span> encoding=<span class="hljs-string">&quot;UTF-8&quot;</span>?&gt;<br>&lt;configuration&gt;<br>    &lt;<span class="hljs-built_in">property</span> name=<span class="hljs-string">&quot;LOG_PATH&quot;</span> value=<span class="hljs-string">&quot;logs&quot;</span>/&gt;<br>    &lt;<span class="hljs-built_in">property</span> name=<span class="hljs-string">&quot;LOG_FILE&quot;</span> value=<span class="hljs-string">&quot;$&#123;LOG_PATH&#125;/spring-boot-logger.log&quot;</span>/&gt;<br><br>    &lt;appender name=<span class="hljs-string">&quot;CONSOLE&quot;</span> <span class="hljs-keyword">class</span>=<span class="hljs-string">&quot;ch.qos.logback.core.ConsoleAppender&quot;</span>&gt;<br>        &lt;encoder&gt;<br>            &lt;pattern&gt;%d&#123;yyyy-MM-dd HH:mm:ss&#125; - %msg%n&lt;/pattern&gt;<br>        &lt;/encoder&gt;<br>    &lt;/appender&gt;<br><br>    &lt;appender name=<span class="hljs-string">&quot;FILE&quot;</span> <span class="hljs-keyword">class</span>=<span class="hljs-string">&quot;ch.qos.logback.core.rolling.RollingFileAppender&quot;</span>&gt;<br>        &lt;file&gt;common.log&lt;/file&gt;<br>        &lt;rollingPolicy <span class="hljs-keyword">class</span>=<span class="hljs-string">&quot;ch.qos.logback.core.rolling.TimeBasedRollingPolicy&quot;</span>&gt;<br>            &lt;fileNamePattern&gt;$&#123;LOG_PATH&#125;/spring-boot-logger.%d&#123;yyyy-MM-dd&#125;.log&lt;/fileNamePattern&gt;<br>            &lt;maxHistory&gt;<span class="hljs-number">30</span>&lt;/maxHistory&gt;<br>        &lt;/rollingPolicy&gt;<br>        &lt;encoder&gt;<br>            &lt;pattern&gt;%d&#123;yyyy-MM-dd HH:mm:ss&#125; - %msg%n&lt;/pattern&gt;<br>        &lt;/encoder&gt;<br>    &lt;/appender&gt;<br><br>    &lt;root level=<span class="hljs-string">&quot;INFO&quot;</span>&gt;<br>        &lt;appender-ref ref=<span class="hljs-string">&quot;CONSOLE&quot;</span>/&gt;<br>        &lt;appender-ref ref=<span class="hljs-string">&quot;FILE&quot;</span>/&gt;<br>    &lt;/root&gt;<br>&lt;/configuration&gt;<br></code></pre></td></tr></table></figure>
+
+<p>然后，我们在需要打印日志的类，加上Slf4j注解，然后使用log来打印日志信息即可，如下代码所示：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><code class="hljs python">package com.yang.web.controller;<br><br><span class="hljs-keyword">import</span> com.yang.api.common.ResultT;<br><span class="hljs-keyword">import</span> com.yang.api.common.command.RegisterCommand;<br><span class="hljs-keyword">import</span> com.yang.api.common.dto.UserDTO;<br><span class="hljs-keyword">import</span> com.yang.api.common.facade.UserFacade;<br><span class="hljs-keyword">import</span> com.yang.web.request.RegisterRequest;<br><span class="hljs-keyword">import</span> lombok.extern.slf4j.Slf4j;<br><span class="hljs-keyword">import</span> org.springframework.beans.factory.annotation.Autowired;<br><span class="hljs-keyword">import</span> org.springframework.web.bind.annotation.*;<br><br><span class="hljs-meta">@RestController</span><br><span class="hljs-meta">@RequestMapping(<span class="hljs-params">value = <span class="hljs-string">&quot;/user&quot;</span></span>)</span><br><span class="hljs-meta">@Slf4j</span><br>public <span class="hljs-keyword">class</span> <span class="hljs-title class_">UserController</span> &#123;<br><span class="hljs-meta">    @Autowired</span><br>    private UserFacade userFacade;<br><br><span class="hljs-meta">    @GetMapping(<span class="hljs-params">value = <span class="hljs-string">&quot;/&#123;id&#125;&quot;</span></span>)</span><br>    public ResultT&lt;UserDTO&gt; queryById(@PathVariable(<span class="hljs-string">&quot;id&quot;</span>) Integer <span class="hljs-built_in">id</span>) &#123;<br>        log.info(<span class="hljs-string">&quot;queryById===========&quot;</span>);<br>        <span class="hljs-keyword">return</span> userFacade.getById(<span class="hljs-built_in">id</span>);<br>    &#125;<br><br><span class="hljs-meta">    @PostMapping(<span class="hljs-params">value = <span class="hljs-string">&quot;/register&quot;</span></span>)</span><br>    public ResultT&lt;String&gt; register(@RequestBody RegisterRequest registerRequest) &#123;<br>        RegisterCommand registerCommand = convert2RegisterCommand(registerRequest);<br>        <span class="hljs-keyword">return</span> userFacade.register2(registerCommand);<br>    &#125;<br><br>    private RegisterCommand convert2RegisterCommand(RegisterRequest registerRequest) &#123;<br>        RegisterCommand registerCommand = new RegisterCommand();<br>        registerCommand.setLoginId(registerRequest.getLoginId());<br>        registerCommand.setEmail(registerRequest.getEmail());<br>        registerCommand.setPassword(registerRequest.getPassword());<br>        registerCommand.setExtendMaps(registerRequest.getExtendMaps());<br>        <span class="hljs-keyword">return</span> registerCommand;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>然后访问queryById，打印结果如下：</p>
+<img src="/2024/10/04/SpringBoot%E6%97%A5%E5%BF%97%E6%89%93%E5%8D%B0%E5%AE%9E%E8%B7%B5/1.png" srcset="/img/loading.gif" lazyload class="">
+
+<h3 id="日志打印工具类"><a href="#日志打印工具类" class="headerlink" title="日志打印工具类"></a>日志打印工具类</h3><p>在logback-spring.xml中，我们虽然能配置日志打印的格式，但是不够灵活，因此，我们可以添加一个日志打印工具类，通过该工具类，来自定义项目中的日志打印格式，以方便后续更好地通过日志排查、定位问题。</p>
+<p>首先创建一个日志打印抽象类，定义日志打印的格式：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><code class="hljs python">package com.yang.core.infrastructure.log;<br><br><span class="hljs-keyword">import</span> org.apache.commons.lang3.StringUtils;<br><span class="hljs-keyword">import</span> org.springframework.util.CollectionUtils;<br><br><span class="hljs-keyword">import</span> java.util.ArrayList;<br><span class="hljs-keyword">import</span> java.util.<span class="hljs-type">List</span>;<br><br>public abstract <span class="hljs-keyword">class</span> <span class="hljs-title class_">AbstractLogPrinter</span> &#123;<br>    protected String bizCode;<br>    <br>    protected <span class="hljs-type">List</span>&lt;String&gt; params = new ArrayList&lt;&gt;();<br><br>    protected String msg;<br><br>    protected Throwable e;<br><br>    public AbstractLogPrinter addBizCode(String bizCode) &#123;<br>        this.bizCode = bizCode;<br>        <span class="hljs-keyword">return</span> this;<br>    &#125;<br><br>    public AbstractLogPrinter addMsg(String msg) &#123;<br>        this.msg = msg;<br>        <span class="hljs-keyword">return</span> this;<br>    &#125;<br><br>    public AbstractLogPrinter addParam(String key, String value) &#123;<br>        this.params.add(key);<br>        this.params.add(value);<br>        <span class="hljs-keyword">return</span> this;<br>    &#125;<br><br>    public AbstractLogPrinter addThrowable(Throwable e) &#123;<br>        this.e = e;<br>        <span class="hljs-keyword">return</span> this;<br>    &#125;<br><br>    public abstract void printBizLog();<br><br>    public abstract void printErrorLog();<br><br>    public abstract String getSeparator();<br><br>    public String commonContent() &#123;<br>        StringBuilder stringBuilder = new StringBuilder();<br>        String separator = getSeparator();<br>        stringBuilder.append(<span class="hljs-string">&quot;bizCode&quot;</span>).append(<span class="hljs-string">&quot;:&quot;</span>)<br>                .append(this.bizCode).append(separator);<br>        <span class="hljs-keyword">if</span> (!CollectionUtils.isEmpty(params)) &#123;<br>            <span class="hljs-keyword">for</span> (<span class="hljs-built_in">int</span> i = <span class="hljs-number">0</span>; i &lt; params.size(); i += <span class="hljs-number">2</span>) &#123;<br>                stringBuilder.append(params.get(i))<br>                        .append(<span class="hljs-string">&quot;:&quot;</span>)<br>                        .append(params.get(i + <span class="hljs-number">1</span>))<br>                        .append(separator);<br>            &#125;<br>        &#125;<br>        <span class="hljs-keyword">if</span> (StringUtils.isNotEmpty(msg)) &#123;<br>            stringBuilder.append(<span class="hljs-string">&quot;msg&quot;</span>).append(<span class="hljs-string">&quot;:&quot;</span>)<br>                    .append(msg).append(separator);<br>        &#125;<br>        <span class="hljs-keyword">return</span> stringBuilder.toString();<br>    &#125;<br>&#125;<br><br></code></pre></td></tr></table></figure>
+
+<p>然后创建日志打印实现类，在实现类中，定制实现日志打印的级别、分隔符等内容</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs python">package com.yang.core.infrastructure.log;<br><br><span class="hljs-keyword">import</span> lombok.extern.slf4j.Slf4j;<br><br><span class="hljs-meta">@Slf4j</span><br>public <span class="hljs-keyword">class</span> <span class="hljs-title class_">PlatformLogPrinter</span> extends AbstractLogPrinter &#123;<br><br>    public void printBizLog() &#123;<br>        log.info(commonContent());<br>    &#125;<br><br>    public void printErrorLog() &#123;<br>        <span class="hljs-keyword">if</span> (e != null) &#123;<br>            log.error(commonContent(), e);<br>        &#125; <span class="hljs-keyword">else</span> &#123;<br>            log.error(commonContent());<br>        &#125;<br>    &#125;<br><br><span class="hljs-meta">    @Override</span><br>    public String getSeparator() &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-string">&quot;&lt;|&gt;&quot;</span>;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>同时，为了方便打印日志，创建一个日志打印创建者</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python">package com.yang.core.infrastructure.log;<br><br>public <span class="hljs-keyword">class</span> <span class="hljs-title class_">PlatformLogger</span> &#123;<br><br>    public static AbstractLogPrinter build() &#123;<br>        <span class="hljs-keyword">return</span> new PlatformLogPrinter();<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>上述内容准备完毕后，我们在controller中，使用PlatformLogger来打印日志，修改后的代码如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><code class="hljs python">package com.yang.web.controller;<br><br><span class="hljs-keyword">import</span> com.yang.api.common.ResultT;<br><span class="hljs-keyword">import</span> com.yang.api.common.command.RegisterCommand;<br><span class="hljs-keyword">import</span> com.yang.api.common.dto.UserDTO;<br><span class="hljs-keyword">import</span> com.yang.api.common.facade.UserFacade;<br><span class="hljs-keyword">import</span> com.yang.core.infrastructure.log.PlatformLogger;<br><span class="hljs-keyword">import</span> com.yang.web.request.RegisterRequest;<br><span class="hljs-keyword">import</span> lombok.extern.slf4j.Slf4j;<br><span class="hljs-keyword">import</span> org.springframework.beans.factory.annotation.Autowired;<br><span class="hljs-keyword">import</span> org.springframework.web.bind.annotation.*;<br><br><span class="hljs-meta">@RestController</span><br><span class="hljs-meta">@RequestMapping(<span class="hljs-params">value = <span class="hljs-string">&quot;/user&quot;</span></span>)</span><br>public <span class="hljs-keyword">class</span> <span class="hljs-title class_">UserController</span> &#123;<br><span class="hljs-meta">    @Autowired</span><br>    private UserFacade userFacade;<br><br><span class="hljs-meta">    @GetMapping(<span class="hljs-params">value = <span class="hljs-string">&quot;/&#123;id&#125;&quot;</span></span>)</span><br>    public ResultT&lt;UserDTO&gt; queryById(@PathVariable(<span class="hljs-string">&quot;id&quot;</span>) Integer <span class="hljs-built_in">id</span>) &#123;<br>        PlatformLogger.build()<br>                .addBizCode(<span class="hljs-string">&quot;queryById&quot;</span>)<br>                .addParam(<span class="hljs-string">&quot;id&quot;</span>, <span class="hljs-built_in">id</span>.toString())<br>                .addMsg(<span class="hljs-string">&quot;query by id&quot;</span>)<br>                .printBizLog();<br>        <span class="hljs-keyword">return</span> userFacade.getById(<span class="hljs-built_in">id</span>);<br>    &#125;<br>    <br><span class="hljs-meta">    @GetMapping(<span class="hljs-params">value = <span class="hljs-string">&quot;/error/&#123;id&#125;&quot;</span></span>)</span><br>    public ResultT testError(@PathVariable(<span class="hljs-string">&quot;id&quot;</span>) Integer <span class="hljs-built_in">id</span>) &#123;<br>        <span class="hljs-keyword">try</span> &#123;<br>            <span class="hljs-built_in">int</span> i = <span class="hljs-number">1</span> / <span class="hljs-number">0</span>;<br>        &#125; catch (Throwable t) &#123;<br>            PlatformLogger.build()<br>                    .addBizCode(<span class="hljs-string">&quot;testError&quot;</span>)<br>                    .addParam(<span class="hljs-string">&quot;id&quot;</span>, <span class="hljs-built_in">id</span>.toString())<br>                    .addMsg(<span class="hljs-string">&quot;test error print&quot;</span>)<br>                    .addThrowable(t)<br>                    .printErrorLog();<br>        &#125;<br>        <span class="hljs-keyword">return</span> ResultT.fail();<br>    &#125;<br><br><span class="hljs-meta">    @PostMapping(<span class="hljs-params">value = <span class="hljs-string">&quot;/register&quot;</span></span>)</span><br>    public ResultT&lt;String&gt; register(@RequestBody RegisterRequest registerRequest) &#123;<br>        RegisterCommand registerCommand = convert2RegisterCommand(registerRequest);<br>        <span class="hljs-keyword">return</span> userFacade.register2(registerCommand);<br>    &#125;<br><br>    private RegisterCommand convert2RegisterCommand(RegisterRequest registerRequest) &#123;<br>        RegisterCommand registerCommand = new RegisterCommand();<br>        registerCommand.setLoginId(registerRequest.getLoginId());<br>        registerCommand.setEmail(registerRequest.getEmail());<br>        registerCommand.setPassword(registerRequest.getPassword());<br>        registerCommand.setExtendMaps(registerRequest.getExtendMaps());<br>        <span class="hljs-keyword">return</span> registerCommand;<br>    &#125;<br>&#125;<br><br></code></pre></td></tr></table></figure>
+
+<p>启动项目，分别访问queryById和testError，打印日志内容如下：</p>
+<img src="/2024/10/04/SpringBoot%E6%97%A5%E5%BF%97%E6%89%93%E5%8D%B0%E5%AE%9E%E8%B7%B5/2.png" srcset="/img/loading.gif" lazyload class="">
+
+<h3 id="日志分文件打印"><a href="#日志分文件打印" class="headerlink" title="日志分文件打印"></a>日志分文件打印</h3><p>一般情况下，我们的项目会分为不同的模块，每一个模块承担不同的职责，比如bussiness模块，主要是负责业务逻辑代码的实现，业务逻辑编排等；web模块主要负责http请求的接收，参数的校验，入参转化为业务层入参等；而core模块主要负责基础能力实现，比如持久化数据库、领域服务实现等。</p>
+<p>对于不同的模块，我们希望将日志输出到不同的文件当中，从而协助我们后续定位问题以及建设不同模块下的监控，包括基础服务监控、业务成功率监控等。</p>
+<img src="/2024/10/04/SpringBoot%E6%97%A5%E5%BF%97%E6%89%93%E5%8D%B0%E5%AE%9E%E8%B7%B5/3.png" srcset="/img/loading.gif" lazyload class="">
+
+<p>因此，我们在不同的模块下，分别实现不同的日志打印工具类：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br></pre></td><td class="code"><pre><code class="hljs python">package com.yang.web.log;<br><br><span class="hljs-keyword">import</span> com.yang.core.infrastructure.log.AbstractLogPrinter;<br><br>public <span class="hljs-keyword">class</span> <span class="hljs-title class_">WebLogger</span> &#123;<br>    public static AbstractLogPrinter build() &#123;<br>        <span class="hljs-keyword">return</span> new WebLogPrinter();<br>    &#125;<br>&#125;<br><br><br>package com.yang.web.log;<br><br><span class="hljs-keyword">import</span> com.yang.core.infrastructure.log.AbstractLogPrinter;<br><span class="hljs-keyword">import</span> lombok.extern.slf4j.Slf4j;<br><br><span class="hljs-meta">@Slf4j</span><br>public <span class="hljs-keyword">class</span> <span class="hljs-title class_">WebLogPrinter</span> extends AbstractLogPrinter &#123;<br><span class="hljs-meta">    @Override</span><br>    public void printBizLog() &#123;<br>        log.info(commonContent());<br>    &#125;<br><br><span class="hljs-meta">    @Override</span><br>    public void printErrorLog() &#123;<br>        <span class="hljs-keyword">if</span> (this.e != null) &#123;<br>            log.error(commonContent(), e);<br>        &#125; <span class="hljs-keyword">else</span> &#123;<br>            log.error(commonContent());<br>        &#125;<br>    &#125;<br><br><span class="hljs-meta">    @Override</span><br>    public String getSeparator() &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-string">&quot;&lt;|&gt;&quot;</span>;<br>    &#125;<br>&#125;<br><br><br>package com.yang.business.log;<br><br>public <span class="hljs-keyword">class</span> <span class="hljs-title class_">BusinessLogger</span> &#123;<br>    public static BusinessLogPrinter build() &#123;<br>        <span class="hljs-keyword">return</span> new BusinessLogPrinter();<br>    &#125;<br>&#125;<br><br><br>package com.yang.business.log;<br><br><span class="hljs-keyword">import</span> com.yang.core.infrastructure.log.AbstractLogPrinter;<br><span class="hljs-keyword">import</span> lombok.extern.slf4j.Slf4j;<br><br><span class="hljs-meta">@Slf4j</span><br>public <span class="hljs-keyword">class</span> <span class="hljs-title class_">BusinessLogPrinter</span> extends AbstractLogPrinter &#123;<br><span class="hljs-meta">    @Override</span><br>    public void printBizLog() &#123;<br>        log.info(commonContent());<br>    &#125;<br><br><span class="hljs-meta">    @Override</span><br>    public void printErrorLog() &#123;<br>        <span class="hljs-keyword">if</span> (this.e != null) &#123;<br>            log.error(commonContent(), e);<br>        &#125; <span class="hljs-keyword">else</span> &#123;<br>            log.error(commonContent());<br>        &#125;<br>    &#125;<br><br><span class="hljs-meta">    @Override</span><br>    public String getSeparator() &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-string">&quot;&lt;|&gt;&quot;</span>;<br>    &#125;<br>&#125;<br><br></code></pre></td></tr></table></figure>
+
+<p>然后我们修改logback-spring.xml文件，将不同的日志打印工具类，输出到不同的日志文件中</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br></pre></td><td class="code"><pre><code class="hljs python">&lt;?xml version=<span class="hljs-string">&quot;1.0&quot;</span> encoding=<span class="hljs-string">&quot;UTF-8&quot;</span>?&gt;<br>&lt;configuration&gt;<br>    &lt;<span class="hljs-built_in">property</span> name=<span class="hljs-string">&quot;LOG_PATH&quot;</span> value=<span class="hljs-string">&quot;logs&quot;</span>/&gt;<br>    &lt;<span class="hljs-built_in">property</span> name=<span class="hljs-string">&quot;LOG_FILE&quot;</span> value=<span class="hljs-string">&quot;$&#123;LOG_PATH&#125;/spring-boot-logger.log&quot;</span>/&gt;<br><br>    &lt;appender name=<span class="hljs-string">&quot;CONSOLE&quot;</span> <span class="hljs-keyword">class</span>=<span class="hljs-string">&quot;ch.qos.logback.core.ConsoleAppender&quot;</span>&gt;<br>        &lt;encoder&gt;<br>            &lt;pattern&gt;%d&#123;yyyy-MM-dd HH:mm:ss&#125; - %msg%n&lt;/pattern&gt;<br>        &lt;/encoder&gt;<br>    &lt;/appender&gt;<br><br>    &lt;appender name=<span class="hljs-string">&quot;FILE&quot;</span> <span class="hljs-keyword">class</span>=<span class="hljs-string">&quot;ch.qos.logback.core.rolling.RollingFileAppender&quot;</span>&gt;<br>        &lt;file&gt;common.log&lt;/file&gt;<br>        &lt;rollingPolicy <span class="hljs-keyword">class</span>=<span class="hljs-string">&quot;ch.qos.logback.core.rolling.TimeBasedRollingPolicy&quot;</span>&gt;<br>            &lt;fileNamePattern&gt;$&#123;LOG_PATH&#125;/spring-boot-logger.%d&#123;yyyy-MM-dd&#125;.log&lt;/fileNamePattern&gt;<br>            &lt;maxHistory&gt;<span class="hljs-number">30</span>&lt;/maxHistory&gt;<br>        &lt;/rollingPolicy&gt;<br>        &lt;encoder&gt;<br>            &lt;pattern&gt;%d&#123;yyyy-MM-dd HH:mm:ss&#125; - %msg%n&lt;/pattern&gt;<br>        &lt;/encoder&gt;<br>    &lt;/appender&gt;<br><br>    &lt;appender name=<span class="hljs-string">&quot;PLATFORM_FILE&quot;</span> <span class="hljs-keyword">class</span>=<span class="hljs-string">&quot;ch.qos.logback.core.rolling.RollingFileAppender&quot;</span>&gt;<br>        &lt;file&gt;platform.log&lt;/file&gt;<br>        &lt;rollingPolicy <span class="hljs-keyword">class</span>=<span class="hljs-string">&quot;ch.qos.logback.core.rolling.TimeBasedRollingPolicy&quot;</span>&gt;<br>            &lt;fileNamePattern&gt;$&#123;LOG_PATH&#125;/platform-logger.%d&#123;yyyy-MM-dd&#125;.log&lt;/fileNamePattern&gt;<br>            &lt;maxHistory&gt;<span class="hljs-number">30</span>&lt;/maxHistory&gt;<br>        &lt;/rollingPolicy&gt;<br>        &lt;encoder&gt;<br>            &lt;pattern&gt;%d&#123;yyyy-MM-dd HH:mm:ss&#125; - %msg%n&lt;/pattern&gt;<br>        &lt;/encoder&gt;<br>    &lt;/appender&gt;<br><br>    &lt;appender name=<span class="hljs-string">&quot;BUSINESS_FILE&quot;</span> <span class="hljs-keyword">class</span>=<span class="hljs-string">&quot;ch.qos.logback.core.rolling.RollingFileAppender&quot;</span>&gt;<br>        &lt;file&gt;business.log&lt;/file&gt;<br>        &lt;rollingPolicy <span class="hljs-keyword">class</span>=<span class="hljs-string">&quot;ch.qos.logback.core.rolling.TimeBasedRollingPolicy&quot;</span>&gt;<br>            &lt;fileNamePattern&gt;$&#123;LOG_PATH&#125;/business-logger.%d&#123;yyyy-MM-dd&#125;.log&lt;/fileNamePattern&gt;<br>            &lt;maxHistory&gt;<span class="hljs-number">30</span>&lt;/maxHistory&gt;<br>        &lt;/rollingPolicy&gt;<br>        &lt;encoder&gt;<br>            &lt;pattern&gt;%d&#123;yyyy-MM-dd HH:mm:ss&#125; - %msg%n&lt;/pattern&gt;<br>        &lt;/encoder&gt;<br>    &lt;/appender&gt;<br><br>    &lt;appender name=<span class="hljs-string">&quot;WEB_FILE&quot;</span> <span class="hljs-keyword">class</span>=<span class="hljs-string">&quot;ch.qos.logback.core.rolling.RollingFileAppender&quot;</span>&gt;<br>        &lt;file&gt;web.log&lt;/file&gt;<br>        &lt;rollingPolicy <span class="hljs-keyword">class</span>=<span class="hljs-string">&quot;ch.qos.logback.core.rolling.TimeBasedRollingPolicy&quot;</span>&gt;<br>            &lt;fileNamePattern&gt;$&#123;LOG_PATH&#125;/web-logger.%d&#123;yyyy-MM-dd&#125;.log&lt;/fileNamePattern&gt;<br>            &lt;maxHistory&gt;<span class="hljs-number">30</span>&lt;/maxHistory&gt;<br>        &lt;/rollingPolicy&gt;<br>        &lt;encoder&gt;<br>            &lt;pattern&gt;%d&#123;yyyy-MM-dd HH:mm:ss&#125; - %msg%n&lt;/pattern&gt;<br>        &lt;/encoder&gt;<br>    &lt;/appender&gt;<br><br>    &lt;root level=<span class="hljs-string">&quot;INFO&quot;</span>&gt;<br>        &lt;appender-ref ref=<span class="hljs-string">&quot;CONSOLE&quot;</span>/&gt;<br>        &lt;appender-ref ref=<span class="hljs-string">&quot;FILE&quot;</span>/&gt;<br>    &lt;/root&gt;<br><br>    &lt;!-- 工具类PlatformLogPrinter的logger --&gt;<br>    &lt;logger name=<span class="hljs-string">&quot;com.yang.core.infrastructure.log.PlatformLogPrinter&quot;</span> level=<span class="hljs-string">&quot;INFO&quot;</span> additivity=<span class="hljs-string">&quot;false&quot;</span>&gt;<br>        &lt;appender-ref ref=<span class="hljs-string">&quot;PLATFORM_FILE&quot;</span> /&gt;<br>    &lt;/logger&gt;<br><br>    &lt;!-- 工具类BusinessLogPrinter的logger --&gt;<br>    &lt;logger name=<span class="hljs-string">&quot;com.yang.business.log.BusinessLogPrinter&quot;</span> level=<span class="hljs-string">&quot;INFO&quot;</span> additivity=<span class="hljs-string">&quot;false&quot;</span>&gt;<br>        &lt;appender-ref ref=<span class="hljs-string">&quot;BUSINESS_FILE&quot;</span> /&gt;<br>    &lt;/logger&gt;<br><br>    &lt;!-- 工具类WebLogPrinter的logger --&gt;<br>    &lt;logger name=<span class="hljs-string">&quot;com.yang.web.log.WebLogPrinter&quot;</span> level=<span class="hljs-string">&quot;INFO&quot;</span> additivity=<span class="hljs-string">&quot;false&quot;</span>&gt;<br>        &lt;appender-ref ref=<span class="hljs-string">&quot;WEB_FILE&quot;</span> /&gt;<br>    &lt;/logger&gt;<br>&lt;/configuration&gt;<br></code></pre></td></tr></table></figure>
+
+<p>最后，分别在web模块、business模块和core模块下，添加埋点日志</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br></pre></td><td class="code"><pre><code class="hljs python">// WEB模块<br><span class="hljs-meta">@GetMapping(<span class="hljs-params">value = <span class="hljs-string">&quot;/&#123;id&#125;&quot;</span></span>)</span><br>    public ResultT&lt;UserDTO&gt; queryById(@PathVariable(<span class="hljs-string">&quot;id&quot;</span>) Integer <span class="hljs-built_in">id</span>) &#123;<br>        WebLogger.build()<br>                .addBizCode(<span class="hljs-string">&quot;userController_queryById&quot;</span>)<br>                .addParam(<span class="hljs-string">&quot;id&quot;</span>, <span class="hljs-built_in">id</span>.toString())<br>                .addMsg(<span class="hljs-string">&quot;query by id&quot;</span>)<br>                .printBizLog();<br>        <span class="hljs-keyword">return</span> userFacade.getById(<span class="hljs-built_in">id</span>);<br>    &#125;<br><br>// Business模块<br><span class="hljs-meta">@Override</span><br>    public ResultT&lt;UserDTO&gt; getById(Integer <span class="hljs-built_in">id</span>) &#123;<br>        UserQueryDomainRequest userQueryDomainRequest = new UserQueryDomainRequest.UserQueryDomainRequestBuilder()<br>                .queryMessage(<span class="hljs-built_in">id</span>.toString())<br>                .userQueryType(UserQueryType.ID)<br>                .build();<br>        UserQueryDomainResponse userQueryDomainResponse = userDomainService.query(userQueryDomainRequest);<br>        <span class="hljs-type">List</span>&lt;UserAccount&gt; userAccountList = userQueryDomainResponse.getUserAccountList();<br>        UserDTO userDTO = null;<br>        <span class="hljs-keyword">if</span> (!CollectionUtils.isEmpty(userAccountList)) &#123;<br>            UserAccount userAccount = userAccountList.get(<span class="hljs-number">0</span>);<br>            userDTO = userDTOConvertor.convert2DTO(userAccount);<br>        &#125;<br>        BusinessLogger.build()<br>                .addBizCode(<span class="hljs-string">&quot;userFacade_getById&quot;</span>)<br>                .addParam(<span class="hljs-string">&quot;id&quot;</span>, <span class="hljs-built_in">id</span>.toString())<br>                .addParam(<span class="hljs-string">&quot;userDTO&quot;</span>, JSONObject.toJSONString(userDTO))<br>                .addMsg(<span class="hljs-string">&quot;get by id&quot;</span>)<br>                .printBizLog();<br>        <span class="hljs-keyword">return</span> ResultT.success(userDTO);<br>    &#125;<br><br><br>// core模块<br>public UserQueryDomainResponse query(UserQueryDomainRequest userQueryDomainRequest) &#123;<br>        UserQueryType userQueryType = userQueryDomainRequest.getUserQueryType();<br>        UserDO userDO = null;<br>        switch (userQueryType) &#123;<br>            <span class="hljs-keyword">case</span> ID:<br>                userDO = queryById(Integer.valueOf(userQueryDomainRequest.getQueryMessage()));<br>                <span class="hljs-keyword">break</span>;<br>            <span class="hljs-keyword">case</span> EMAIL:<br>                userDO = queryByEmail(userQueryDomainRequest.getQueryMessage());<br>                <span class="hljs-keyword">break</span>;<br>            <span class="hljs-keyword">case</span> LOGIN_ID:<br>                userDO = queryByLoginId(userQueryDomainRequest.getQueryMessage());<br>                <span class="hljs-keyword">break</span>;<br>        &#125;<br>        <span class="hljs-keyword">if</span> (userDO == null) &#123;<br>            <span class="hljs-keyword">return</span> new UserQueryDomainResponse();<br>        &#125;<br>        UserAccount userAccount = new UserAccount();<br>        userAccount.setId(userDO.getId());<br>        userAccount.setLoginId(userDO.getLoginId());<br>        userAccount.setEmail(userDO.getEmail());<br>        userAccount.setFeatureMap(FeatureUtils.convert2FeatureMap(userDO.getFeatures()));<br>        userAccount.setCreateTime(userDO.getCreateTime());<br>        userAccount.setUpdateTime(userDO.getUpdateTime());<br>        UserQueryDomainResponse userQueryDomainResponse = new UserQueryDomainResponse();<br>        <span class="hljs-type">List</span>&lt;UserAccount&gt; userAccounts = new ArrayList&lt;&gt;();<br>        userAccounts.add(userAccount);<br>        userQueryDomainResponse.setUserAccountList(userAccounts);<br><br>        PlatformLogger.build()<br>                .addBizCode(<span class="hljs-string">&quot;userDomainService_query&quot;</span>)<br>                .addParam(<span class="hljs-string">&quot;queryMsg&quot;</span>, userQueryDomainRequest.getQueryMessage())<br>                .addParam(<span class="hljs-string">&quot;queryType&quot;</span>, userQueryDomainRequest.getUserQueryType().name())<br>                .printBizLog();<br>        <span class="hljs-keyword">return</span> userQueryDomainResponse;<br>    &#125;<br></code></pre></td></tr></table></figure>
+
+<p>启动项目，访问queryById接口，可以看到在web.log，business.log和platform.log下分别打印了不同的日志信息</p>
+<img src="/2024/10/04/SpringBoot%E6%97%A5%E5%BF%97%E6%89%93%E5%8D%B0%E5%AE%9E%E8%B7%B5/4.png" srcset="/img/loading.gif" lazyload class="">
+
+<img src="/2024/10/04/SpringBoot%E6%97%A5%E5%BF%97%E6%89%93%E5%8D%B0%E5%AE%9E%E8%B7%B5/5.png" srcset="/img/loading.gif" lazyload class="">
+
+<img src="/2024/10/04/SpringBoot%E6%97%A5%E5%BF%97%E6%89%93%E5%8D%B0%E5%AE%9E%E8%B7%B5/6.png" srcset="/img/loading.gif" lazyload class="">
+
+<h3 id="参考文档"><a href="#参考文档" class="headerlink" title="参考文档"></a>参考文档</h3><p><a target="_blank" rel="noopener" href="https://cloud.tencent.com/developer/article/2419957">【Spring Boot】深入解密Spring Boot日志：最佳实践与策略解析-腾讯云开发者社区-腾讯云 (tencent.com)</a></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E5%B7%A5%E4%BD%9C%E7%A7%AF%E7%B4%AF/" class="print-no-link">#工作积累</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>SpringBoot日志打印实践</div>
+      <div>https://cxydhi.github.io/2024/10/04/SpringBoot日志打印实践/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>沉河不浮</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年10月4日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/10/04/%E6%B5%81%E7%A8%8B%E5%BC%95%E6%93%8E%E5%AE%9E%E7%8E%B0%EF%BC%88%E4%B8%80%EF%BC%89%E2%80%94%E4%B8%B2%E8%A1%8C%E6%B5%81%E7%A8%8B%E5%AE%9E%E7%8E%B0/" title="流程引擎实现（一）—串行流程实现">
+                        <span class="hidden-mobile">流程引擎实现（一）—串行流程实现</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
