@@ -1,0 +1,730 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="沉河不浮">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="背景在流程图中，时常会涉及到分支的判断，进入判断逻辑后，我们一般只会从分支的一个出口出来，然后往下继续执行，这在流程引擎中，称之为排他网关（Exclusive Gateway)，排他网关用于在流程执行过程中做出决策，基于流程中的条件来选择一个唯一的路径继续执行。 下面我们以登录为例，在登录流程中，会依次执行下列流程：  账号定位：根据入参定位账号信息 密码检查：根据获取的账号信息，以及输入的密码，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="流程引擎实现（二）—排他网关">
+<meta property="og:url" content="https://cxydhi.github.io/2024/10/05/%E6%B5%81%E7%A8%8B%E5%BC%95%E6%93%8E%E5%AE%9E%E7%8E%B0%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E6%8E%92%E4%BB%96%E7%BD%91%E5%85%B3/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="背景在流程图中，时常会涉及到分支的判断，进入判断逻辑后，我们一般只会从分支的一个出口出来，然后往下继续执行，这在流程引擎中，称之为排他网关（Exclusive Gateway)，排他网关用于在流程执行过程中做出决策，基于流程中的条件来选择一个唯一的路径继续执行。 下面我们以登录为例，在登录流程中，会依次执行下列流程：  账号定位：根据入参定位账号信息 密码检查：根据获取的账号信息，以及输入的密码，">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cxydhi.github.io/2024/10/05/%E6%B5%81%E7%A8%8B%E5%BC%95%E6%93%8E%E5%AE%9E%E7%8E%B0%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E6%8E%92%E4%BB%96%E7%BD%91%E5%85%B3/1.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/10/05/%E6%B5%81%E7%A8%8B%E5%BC%95%E6%93%8E%E5%AE%9E%E7%8E%B0%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E6%8E%92%E4%BB%96%E7%BD%91%E5%85%B3/2.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/10/05/%E6%B5%81%E7%A8%8B%E5%BC%95%E6%93%8E%E5%AE%9E%E7%8E%B0%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E6%8E%92%E4%BB%96%E7%BD%91%E5%85%B3/3.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/10/05/%E6%B5%81%E7%A8%8B%E5%BC%95%E6%93%8E%E5%AE%9E%E7%8E%B0%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E6%8E%92%E4%BB%96%E7%BD%91%E5%85%B3/4.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/10/05/%E6%B5%81%E7%A8%8B%E5%BC%95%E6%93%8E%E5%AE%9E%E7%8E%B0%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E6%8E%92%E4%BB%96%E7%BD%91%E5%85%B3/5.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/10/05/%E6%B5%81%E7%A8%8B%E5%BC%95%E6%93%8E%E5%AE%9E%E7%8E%B0%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E6%8E%92%E4%BB%96%E7%BD%91%E5%85%B3/4.png">
+<meta property="og:image" content="https://cxydhi.github.io/2024/10/05/%E6%B5%81%E7%A8%8B%E5%BC%95%E6%93%8E%E5%AE%9E%E7%8E%B0%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E6%8E%92%E4%BB%96%E7%BD%91%E5%85%B3/5.png">
+<meta property="article:published_time" content="2024-10-05T06:06:01.000Z">
+<meta property="article:modified_time" content="2024-10-05T06:10:55.164Z">
+<meta property="article:author" content="沉河不浮">
+<meta property="article:tag" content="工作积累">
+<meta property="article:tag" content="流程引擎">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://cxydhi.github.io/2024/10/05/%E6%B5%81%E7%A8%8B%E5%BC%95%E6%93%8E%E5%AE%9E%E7%8E%B0%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E6%8E%92%E4%BB%96%E7%BD%91%E5%85%B3/1.png">
+  
+  
+  
+  <title>流程引擎实现（二）—排他网关 - Hexo</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"cxydhi.github.io","root":"/","version":"1.9.5","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"enable":true,"app_id":"vlIS4CUIvKuiH8sZ3Zhpo4lm-gzGzoHsz","app_key":"1RITqHwIHvFr7l7Dsjhm6qRx","server_url":"https://vlis4cui.lc-cn-n1-shared.com","path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Fluid</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="流程引擎实现（二）—排他网关"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-10-05 14:06" pubdate>
+          2024年10月5日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          25k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          211 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">流程引擎实现（二）—排他网关</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p>在流程图中，时常会涉及到分支的判断，进入判断逻辑后，我们一般只会从分支的一个出口出来，然后往下继续执行，这在流程引擎中，称之为排他网关（Exclusive Gateway)，排他网关用于在流程执行过程中做出决策，基于流程中的条件来选择一个唯一的路径继续执行。</p>
+<p>下面我们以登录为例，在登录流程中，会依次执行下列流程：</p>
+<ul>
+<li>账号定位：根据入参定位账号信息</li>
+<li>密码检查：根据获取的账号信息，以及输入的密码，比对密码信息是否正确</li>
+<li>状态检查：检查用户状态，判断是否被盗、冻结等</li>
+<li>登录核身判断：<ol>
+<li>状态检查通过，颁发登录token</li>
+<li>状态检查不通过，设置核身相关信息，如核身类型等</li>
+</ol>
+</li>
+<li>创建token：状态检查通过，则下发登录态token，若不通过，下发核身token</li>
+</ul>
+<p>具体的流程图如下所示：</p>
+<img src="/2024/10/05/%E6%B5%81%E7%A8%8B%E5%BC%95%E6%93%8E%E5%AE%9E%E7%8E%B0%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E6%8E%92%E4%BB%96%E7%BD%91%E5%85%B3/1.png" srcset="/img/loading.gif" lazyload class="">
+
+<h3 id="设计思路"><a href="#设计思路" class="headerlink" title="设计思路"></a>设计思路</h3><h4 id="原先的执行方式"><a href="#原先的执行方式" class="headerlink" title="原先的执行方式"></a>原先的执行方式</h4><ul>
+<li>根据流程id，解析流程配置文件，获取ActivitiFlow</li>
+<li>遍历ActivitiFlow的所有节点，依次执行节点活动</li>
+</ul>
+<img src="/2024/10/05/%E6%B5%81%E7%A8%8B%E5%BC%95%E6%93%8E%E5%AE%9E%E7%8E%B0%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E6%8E%92%E4%BB%96%E7%BD%91%E5%85%B3/2.png" srcset="/img/loading.gif" lazyload class="">
+
+<h4 id="修改后的执行方式"><a href="#修改后的执行方式" class="headerlink" title="修改后的执行方式"></a>修改后的执行方式</h4><ul>
+<li>根据流程id，解析流程配置文件，获取ActivitiFlow</li>
+<li>执行流程节点活动<ul>
+<li>对于ServiceTask，转为IServiceTask执行execute方法</li>
+<li>对于排他网关，转为IExeclusiveGateway执行parseCredential方法</li>
+</ul>
+</li>
+<li>节点执行完毕后，根据sequenceFlow连线信息，获取下一个节点（对于网关，会加上凭证credential的判断，来决策下一个节点）</li>
+</ul>
+<img src="/2024/10/05/%E6%B5%81%E7%A8%8B%E5%BC%95%E6%93%8E%E5%AE%9E%E7%8E%B0%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E6%8E%92%E4%BB%96%E7%BD%91%E5%85%B3/3.png" srcset="/img/loading.gif" lazyload class="">
+
+<h4 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h4><p>首先，我们根据上述流程图，定义流程文件内容如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs python">&lt;?xml version=<span class="hljs-string">&quot;1.0&quot;</span> encoding=<span class="hljs-string">&quot;UTF-8&quot;</span> standalone=<span class="hljs-string">&quot;yes&quot;</span>?&gt;<br>&lt;activiti <span class="hljs-built_in">id</span>=<span class="hljs-string">&quot;register_flow&quot;</span>&gt;<br>    &lt;!--节点定义--&gt;<br>    &lt;startEvent <span class="hljs-built_in">id</span>=<span class="hljs-string">&quot;startEvent&quot;</span>/&gt;<br>    &lt;serviceTask <span class="hljs-built_in">id</span>=<span class="hljs-string">&quot;userLocate&quot;</span> name=<span class="hljs-string">&quot;userLocate&quot;</span> description=<span class="hljs-string">&quot;账号定位&quot;</span> <span class="hljs-keyword">class</span>=<span class="hljs-string">&quot;com.yang.business.activiti.login.UserLocateActivity&quot;</span>/&gt;<br>    &lt;serviceTask <span class="hljs-built_in">id</span>=<span class="hljs-string">&quot;passwordCheck&quot;</span> name=<span class="hljs-string">&quot;passwordCheck&quot;</span> description=<span class="hljs-string">&quot;密码检查&quot;</span> <span class="hljs-keyword">class</span>=<span class="hljs-string">&quot;com.yang.business.activiti.login.PasswordCheckActivity&quot;</span>/&gt;<br>    &lt;serviceTask <span class="hljs-built_in">id</span>=<span class="hljs-string">&quot;userAccountStatusCheck&quot;</span> name=<span class="hljs-string">&quot;userAccountStatusCheck&quot;</span> description=<span class="hljs-string">&quot;账号状态检查&quot;</span> <span class="hljs-keyword">class</span>=<span class="hljs-string">&quot;com.yang.business.activiti.login.UserAccountStatusCheckActivity&quot;</span>/&gt;<br>    &lt;exclusiveGateway <span class="hljs-built_in">id</span>=<span class="hljs-string">&quot;needBuildIdentityAction&quot;</span> name=<span class="hljs-string">&quot;needBuildIdentityAction&quot;</span> description=<span class="hljs-string">&quot;是否需要转核身&quot;</span> <span class="hljs-keyword">class</span>=<span class="hljs-string">&quot;com.yang.business.activiti.login.NeedTransfer2IdentityExclusiveGateway&quot;</span>/&gt;<br>    &lt;serviceTask <span class="hljs-built_in">id</span>=<span class="hljs-string">&quot;buildIdentityAction&quot;</span> name=<span class="hljs-string">&quot;buildIdentityAction&quot;</span> description=<span class="hljs-string">&quot;核身行为构建&quot;</span> <span class="hljs-keyword">class</span>=<span class="hljs-string">&quot;com.yang.business.activiti.login.BuildIdentityActionActivity&quot;</span>/&gt;<br>    &lt;serviceTask <span class="hljs-built_in">id</span>=<span class="hljs-string">&quot;buildUserToken&quot;</span> name=<span class="hljs-string">&quot;buildUserToken&quot;</span> description=<span class="hljs-string">&quot;创建用户token&quot;</span> <span class="hljs-keyword">class</span>=<span class="hljs-string">&quot;com.yang.business.activiti.common.BuildUserTokenActivity&quot;</span>/&gt;<br>    &lt;endEvent <span class="hljs-built_in">id</span>=<span class="hljs-string">&quot;endEvent&quot;</span>/&gt;<br><br>    &lt;!--节点执行顺序编排--&gt;<br>    &lt;sequenceFlow source=<span class="hljs-string">&quot;startEvent&quot;</span> target=<span class="hljs-string">&quot;userLocate&quot;</span>/&gt;<br>    &lt;sequenceFlow source=<span class="hljs-string">&quot;userLocate&quot;</span> target=<span class="hljs-string">&quot;passwordCheck&quot;</span>/&gt;<br>    &lt;sequenceFlow source=<span class="hljs-string">&quot;passwordCheck&quot;</span> target=<span class="hljs-string">&quot;userAccountStatusCheck&quot;</span>/&gt;<br>    &lt;sequenceFlow source=<span class="hljs-string">&quot;userAccountStatusCheck&quot;</span> target=<span class="hljs-string">&quot;needBuildIdentityAction&quot;</span>/&gt;<br>    &lt;sequenceFlow source=<span class="hljs-string">&quot;needBuildIdentityAction&quot;</span> target=<span class="hljs-string">&quot;buildIdentityAction&quot;</span> credential=<span class="hljs-string">&quot;identity&quot;</span>/&gt;<br>    &lt;sequenceFlow source=<span class="hljs-string">&quot;needBuildIdentityAction&quot;</span> target=<span class="hljs-string">&quot;buildUserToken&quot;</span> credential=<span class="hljs-string">&quot;login&quot;</span>/&gt;<br>    &lt;sequenceFlow source=<span class="hljs-string">&quot;buildIdentityAction&quot;</span> target=<span class="hljs-string">&quot;buildUserToken&quot;</span>/&gt;<br>    &lt;sequenceFlow source=<span class="hljs-string">&quot;buildUserToken&quot;</span> target=<span class="hljs-string">&quot;endEvent&quot;</span>/&gt;<br>&lt;/activiti&gt;<br></code></pre></td></tr></table></figure>
+
+<p>对于节点与节点之间的联系，是通过sequenceFlow来实现的，而目前我们的sequenceFlow只有source和target这两个信息，前者表示来源，后者表示去处，此时的sequenceFlow是没有阻塞条件的，当出现一个source有多个target时，我们可以在sequenceFlow加上阻塞条件，用于根据上下文信息，决策需要走哪一条路径。修改后的sequenceFlow如下，我们新增一个crendential字段，用于表示当上下文中凭证信息为相关值时，才可以走这条连线。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs python">package com.yang.core.infrastructure.flow.activiti.model;<br><br><span class="hljs-keyword">import</span> lombok.Data;<br><br><span class="hljs-keyword">import</span> java.io.Serializable;<br><br><span class="hljs-meta">@Data</span><br>public <span class="hljs-keyword">class</span> <span class="hljs-title class_">SequenceFlowNode</span> implements Serializable &#123;<br><br>    private String source;<br><br>    private String target;<br><br>    private String credential;<br><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>在上一节中，我们定义的activitiFlow流程模型结构如下，此时的activitiFlow对sequenceFlow不感知，因为之前涉及的时候，不存在一个来源对应多个去处的连线，所以获取节点顺序，依次执行即可。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs python">package com.yang.core.infrastructure.flow.activiti.model;<br><br><span class="hljs-keyword">import</span> java.util.ArrayList;<br><span class="hljs-keyword">import</span> java.util.<span class="hljs-type">List</span>;<br><br>public <span class="hljs-keyword">class</span> <span class="hljs-title class_">ActivitiFlow</span> &#123;<br>    private String <span class="hljs-built_in">id</span>;<br><br>    private <span class="hljs-type">List</span>&lt;FlowNode&gt; flowNodeList = new ArrayList&lt;&gt;();<br><br>    public void addFlowNode(FlowNode flowNode) &#123;<br>        this.flowNodeList.add(flowNode);<br>    &#125;<br><br>    public <span class="hljs-type">List</span>&lt;FlowNode&gt; getFlowNodeList() &#123;<br>        <span class="hljs-keyword">return</span> this.flowNodeList;<br>    &#125;<br><br>    public String getId() &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-built_in">id</span>;<br>    &#125;<br><br>    public void setId(String <span class="hljs-built_in">id</span>) &#123;<br>        this.<span class="hljs-built_in">id</span> = <span class="hljs-built_in">id</span>;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>当前模型显然无法支持我们的排他网关，因为排他网关的入口是一个，但是出口可以是多个的，而List结构，只能支持一对一的顺序串联，所以我们对ActivitiFlow模型进行改造，使其能支持我们的一对多逻辑，同时，对模型进行充血，将一些决策逻辑收敛到模型中。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><code class="hljs python">package com.yang.core.infrastructure.flow.activiti.model;<br><br><span class="hljs-keyword">import</span> lombok.Data;<br><span class="hljs-keyword">import</span> org.apache.commons.lang3.StringUtils;<br><br><span class="hljs-keyword">import</span> java.util.<span class="hljs-type">List</span>;<br><span class="hljs-keyword">import</span> java.util.Map;<br><br><span class="hljs-meta">@Data</span><br>public <span class="hljs-keyword">class</span> <span class="hljs-title class_">ActivitiFlow</span> &#123;<br>    private String <span class="hljs-built_in">id</span>;<br><br>    private FlowNode startNode;<br><br>    private FlowNode endNode;<br><br>    private <span class="hljs-type">List</span>&lt;SequenceFlowNode&gt; sequenceFlowNodeList;<br><br>    private Map&lt;String, FlowNode&gt; nodeId2FlowNodeMap;<br><br>    public FlowNode chooseNextNode(FlowNode curNode, String credential) &#123;<br>        String sourceNodeId = curNode.getId();<br>        String targetNodeId = null;<br>        <span class="hljs-keyword">for</span> (SequenceFlowNode sequenceFlowNode : sequenceFlowNodeList) &#123;<br>            <span class="hljs-keyword">if</span> (!sequenceFlowNode.getSource().equals(sourceNodeId)) &#123;<br>                <span class="hljs-keyword">continue</span>;<br>            &#125;<br>            <span class="hljs-keyword">if</span> (StringUtils.isEmpty(sequenceFlowNode.getCredential())) &#123;<br>                <span class="hljs-keyword">continue</span>;<br>            &#125;<br>            <span class="hljs-keyword">if</span> (sequenceFlowNode.getCredential().equals(credential)) &#123;<br>                targetNodeId = sequenceFlowNode.getTarget();<br>                <span class="hljs-keyword">break</span>;<br>            &#125;<br>        &#125;<br>        <span class="hljs-keyword">return</span> nodeId2FlowNodeMap.get(targetNodeId);<br>    &#125;<br><br>    public FlowNode getNextNode(FlowNode curNode) &#123;<br>        String sourceNodeId = curNode.getId();<br>        String targetNodeId = null;<br>        <span class="hljs-keyword">for</span> (SequenceFlowNode sequenceFlowNode : sequenceFlowNodeList) &#123;<br>            <span class="hljs-keyword">if</span> (sequenceFlowNode.getSource().equals(sourceNodeId)) &#123;<br>                targetNodeId = sequenceFlowNode.getTarget();<br>                <span class="hljs-keyword">break</span>;<br>            &#125;<br>        &#125;<br>        <span class="hljs-keyword">return</span> nodeId2FlowNodeMap.get(targetNodeId);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>因为ActivitiFlow的模型结构有所变更，因此，我们需要修改对应的解析器，以适应当前结构。首先修改XmlActivitiFileParser的parseSequenceFlowNode方法，增加对credential字段的解析：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs python">/**<br>    * 解析流程执行顺序节点<br>    * @param attributes<br>    * @<span class="hljs-keyword">return</span><br>    */<br>   private SequenceFlowNode parseSequenceFlowNode(NamedNodeMap attributes) &#123;<br>       Node sourceNode = attributes.getNamedItem(<span class="hljs-string">&quot;source&quot;</span>);<br>       Node targetNode = attributes.getNamedItem(<span class="hljs-string">&quot;target&quot;</span>);<br>       <span class="hljs-keyword">if</span> (sourceNode != null &amp;&amp; targetNode != null) &#123;<br>           SequenceFlowNode sequenceFlowNode = new SequenceFlowNode();<br>           sequenceFlowNode.setSource(sourceNode.getNodeValue());<br>           sequenceFlowNode.setTarget(targetNode.getNodeValue());<br><br>           Node credentialNode = attributes.getNamedItem(<span class="hljs-string">&quot;credential&quot;</span>);<br>           <span class="hljs-keyword">if</span> (credentialNode != null) &#123;<br>               sequenceFlowNode.setCredential(credentialNode.getNodeValue());<br>           &#125;<br>           <span class="hljs-keyword">return</span> sequenceFlowNode;<br>       &#125;<br>       <span class="hljs-keyword">return</span> null;<br>   &#125;<br></code></pre></td></tr></table></figure>
+
+<p>其次，修改AbstractActivitiParser，使其能正确解析ActivitiFlow</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br></pre></td><td class="code"><pre><code class="hljs python">package com.yang.core.infrastructure.flow.activiti.parser;<br><br><br><span class="hljs-keyword">import</span> com.yang.api.common.ErrorCode;<br><span class="hljs-keyword">import</span> com.yang.api.common.exception.UicException;<br><span class="hljs-keyword">import</span> com.yang.core.infrastructure.flow.activiti.enums.FlowNodeType;<br><span class="hljs-keyword">import</span> com.yang.core.infrastructure.flow.activiti.model.ActivitiFlow;<br><span class="hljs-keyword">import</span> com.yang.core.infrastructure.flow.activiti.model.FlowNode;<br><span class="hljs-keyword">import</span> com.yang.core.infrastructure.flow.activiti.model.SequenceFlowNode;<br><span class="hljs-keyword">import</span> com.yang.core.infrastructure.utils.SpringContextUtil;<br><br><span class="hljs-keyword">import</span> java.util.*;<br><span class="hljs-keyword">import</span> java.util.function.Function;<br><span class="hljs-keyword">import</span> java.util.stream.Collectors;<br><br>public abstract <span class="hljs-keyword">class</span> <span class="hljs-title class_">AbstractActivitiFileParser</span> implements IActivitiFileParser&#123;<br><br>    /**<br>     * 填充流程节点内容<br>     * @param flowNode<br>     * @param flowNodeType<br>     */<br>    protected void richFlowNode(FlowNode flowNode, FlowNodeType flowNodeType) &#123;<br>        <span class="hljs-keyword">if</span> (flowNodeType != FlowNodeType.SERVICE_TASK &amp;&amp; flowNodeType != FlowNodeType.EXCLUSIVE_GATEWAY) &#123;<br>            <span class="hljs-keyword">return</span>;<br>        &#125;<br>        <span class="hljs-keyword">try</span> &#123;<br>            // 填充target对象<br>            Class&lt;?&gt; aClass = Class.forName(flowNode.getClassPath());<br>            Object target = SpringContextUtil.getBeanByType(aClass);<br>            flowNode.setTarget(target);<br>        &#125; catch (ClassNotFoundException e) &#123;<br>            e.printStackTrace();<br>        &#125;<br>    &#125;<br><br>    /**<br>     * 根据连线顺序，对流程节点进行排序，构建相应的流程flow<br>     * @param fileName<br>     * @param flowNodeList<br>     * @param sequenceFlowNodeList<br>     * @<span class="hljs-keyword">return</span><br>     */<br>    protected ActivitiFlow buildActivitiFlow(String fileName,<br>                                             <span class="hljs-type">List</span>&lt;FlowNode&gt; flowNodeList,<br>                                             <span class="hljs-type">List</span>&lt;SequenceFlowNode&gt; sequenceFlowNodeList) &#123;<br>        String startNodeId = getStartNodeId(sequenceFlowNodeList);<br>        String endNodeId = getEndNodeId(sequenceFlowNodeList);<br>        Map&lt;String, FlowNode&gt; nodeId2FlowNodeMap = flowNodeList.stream()<br>                .collect(Collectors.toMap(FlowNode::getId, Function.identity()));<br><br>        ActivitiFlow activitiFlow = new ActivitiFlow();<br>        activitiFlow.setId(fileName);<br>        activitiFlow.setStartNode(nodeId2FlowNodeMap.get(startNodeId));<br>        activitiFlow.setEndNode(nodeId2FlowNodeMap.get(endNodeId));<br>        activitiFlow.setNodeId2FlowNodeMap(nodeId2FlowNodeMap);<br>        activitiFlow.setSequenceFlowNodeList(sequenceFlowNodeList);<br>        <span class="hljs-keyword">return</span> activitiFlow;<br>    &#125;<br><br>    /**<br>     * 获取结束节点<span class="hljs-built_in">id</span><br>     * @param sequenceFlowNodeList<br>     * @<span class="hljs-keyword">return</span><br>     */<br>    private String getEndNodeId(<span class="hljs-type">List</span>&lt;SequenceFlowNode&gt; sequenceFlowNodeList) &#123;<br>        <span class="hljs-type">List</span>&lt;String&gt; oneNodeIds = filterCountOneNodeId(sequenceFlowNodeList);<br>        <span class="hljs-type">Set</span>&lt;String&gt; oneNodeIdSet = new HashSet&lt;&gt;(oneNodeIds);<br>        String endNodeId = null;<br>        <span class="hljs-keyword">for</span> (SequenceFlowNode sequenceFlowNode : sequenceFlowNodeList) &#123;<br>            String target = sequenceFlowNode.getTarget();<br>            <span class="hljs-keyword">if</span> (oneNodeIdSet.contains(target)) &#123;<br>                endNodeId = target;<br>                <span class="hljs-keyword">break</span>;<br>            &#125;<br>        &#125;<br>        <span class="hljs-keyword">return</span> endNodeId;<br>    &#125;<br><br>    /**<br>     * 获取开始节点<span class="hljs-built_in">id</span><br>     * @param sequenceFlowNodeList<br>     * @<span class="hljs-keyword">return</span><br>     */<br>    private String getStartNodeId(<span class="hljs-type">List</span>&lt;SequenceFlowNode&gt; sequenceFlowNodeList) &#123;<br>        <span class="hljs-type">List</span>&lt;String&gt; oneNodeIds = filterCountOneNodeId(sequenceFlowNodeList);<br>        <span class="hljs-type">Set</span>&lt;String&gt; oneNodeIdSet = new HashSet&lt;&gt;(oneNodeIds);<br>        String startNodeId = null;<br>        <span class="hljs-keyword">for</span> (SequenceFlowNode sequenceFlowNode : sequenceFlowNodeList) &#123;<br>            String source = sequenceFlowNode.getSource();<br>            <span class="hljs-keyword">if</span> (oneNodeIdSet.contains(source)) &#123;<br>                startNodeId = source;<br>                <span class="hljs-keyword">break</span>;<br>            &#125;<br>        &#125;<br>        <span class="hljs-keyword">return</span> startNodeId;<br>    &#125;<br><br><br>    /**<br>     * 过滤计数次数只有<span class="hljs-number">1</span>次的nodeId，只有startEvent和endEvent会计数<span class="hljs-number">1</span>次，其他都是两次，如果是网关，那么次数会更多<br>     * @param sequenceFlowNodeList<br>     * @<span class="hljs-keyword">return</span><br>     */<br>    private <span class="hljs-type">List</span>&lt;String&gt; filterCountOneNodeId(<span class="hljs-type">List</span>&lt;SequenceFlowNode&gt; sequenceFlowNodeList) &#123;<br>        Map&lt;String, Integer&gt; countNodeIdMap = new HashMap&lt;&gt;();<br>        <span class="hljs-keyword">for</span> (SequenceFlowNode sequenceFlowNode : sequenceFlowNodeList) &#123;<br>            Integer sourceCount = countNodeIdMap.getOrDefault(sequenceFlowNode.getSource(), <span class="hljs-number">0</span>);<br>            countNodeIdMap.put(sequenceFlowNode.getSource(), sourceCount + <span class="hljs-number">1</span>);<br><br>            Integer targetCount = countNodeIdMap.getOrDefault(sequenceFlowNode.getTarget(), <span class="hljs-number">0</span>);<br>            countNodeIdMap.put(sequenceFlowNode.getTarget(), targetCount + <span class="hljs-number">1</span>);<br>        &#125;<br>        <span class="hljs-type">List</span>&lt;String&gt; countOneNodeIds = new ArrayList&lt;&gt;();<br>        countNodeIdMap.forEach((nodeId, count) -&gt; &#123;<br>            <span class="hljs-keyword">if</span> (count == <span class="hljs-number">1</span>) &#123;<br>                countOneNodeIds.add(nodeId);<br>            &#125;<br>        &#125;);<br>        <span class="hljs-keyword">if</span> (countOneNodeIds.size() &gt; <span class="hljs-number">2</span>) &#123;<br>            throw new UicException(ErrorCode.ACTIVITI_PARSER_ERROR);<br>        &#125;<br>        <span class="hljs-keyword">return</span> countOneNodeIds;<br>    &#125;<br><br>&#125;<br><br></code></pre></td></tr></table></figure>
+
+<p>最后，修改ActivitiManager类，对排他网关做定制处理，根据网关返回的凭证值，决策出下一个节点是哪一个。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br></pre></td><td class="code"><pre><code class="hljs python">package com.yang.core.infrastructure.flow.activiti;<br><br><br><span class="hljs-keyword">import</span> com.yang.api.common.ErrorCode;<br><span class="hljs-keyword">import</span> com.yang.api.common.exception.UicException;<br><span class="hljs-keyword">import</span> com.yang.core.infrastructure.flow.activiti.enums.FlowNodeType;<br><span class="hljs-keyword">import</span> com.yang.core.infrastructure.flow.activiti.function.IExclusiveGateway;<br><span class="hljs-keyword">import</span> com.yang.core.infrastructure.flow.activiti.function.IServiceTask;<br><span class="hljs-keyword">import</span> com.yang.core.infrastructure.flow.activiti.model.ActivitiFlow;<br><span class="hljs-keyword">import</span> com.yang.core.infrastructure.flow.activiti.model.FlowNode;<br><span class="hljs-keyword">import</span> com.yang.core.infrastructure.flow.activiti.parser.IActivitiFileParser;<br><span class="hljs-keyword">import</span> com.yang.core.infrastructure.flow.activiti.request.ActivitiEngineRequest;<br><span class="hljs-keyword">import</span> com.yang.core.infrastructure.flow.activiti.response.ActivitiEngineResponse;<br><span class="hljs-keyword">import</span> com.yang.core.infrastructure.utils.SpringContextUtil;<br><br><span class="hljs-keyword">import</span> java.util.HashMap;<br><span class="hljs-keyword">import</span> java.util.Map;<br><br>public <span class="hljs-keyword">class</span> <span class="hljs-title class_">ActivitiFlowManager</span> &#123;<br>    private static Map&lt;String, ActivitiFlow&gt; id2ActivitiFlowCache = new HashMap&lt;&gt;();<br><br>    public static ActivitiFlow getActivitiFlow(String flowName) &#123;<br>        ActivitiFlow activitiFlow = id2ActivitiFlowCache.get(flowName);<br>        <span class="hljs-keyword">if</span> (activitiFlow != null) &#123;<br>            <span class="hljs-keyword">return</span> activitiFlow;<br>        &#125;<br>        IActivitiFileParser iActivitiFileParser = SpringContextUtil.getBeanByType(IActivitiFileParser.<span class="hljs-keyword">class</span>);<br>        synchronized (flowName.intern()) &#123;<br>            activitiFlow = id2ActivitiFlowCache.get(flowName);<br>            <span class="hljs-keyword">if</span> (activitiFlow != null) &#123;<br>                <span class="hljs-keyword">return</span> activitiFlow;<br>            &#125;<br>            activitiFlow = iActivitiFileParser.parseActivitiFlow(flowName);<br>            <span class="hljs-keyword">if</span> (activitiFlow == null) &#123;<br>                throw new UicException(ErrorCode.ACTIVITI_NOT_FOUND_ERROR);<br>            &#125;<br>            id2ActivitiFlowCache.put(flowName, activitiFlow);<br>        &#125;<br>        <span class="hljs-keyword">return</span> activitiFlow;<br>    &#125;<br><br>    /**<br>     * 流程引擎执行方法<br>     * @param flowName<br>     * @param activitiEngineRequest<br>     * @<span class="hljs-keyword">return</span><br>     * @param &lt;Request&gt;<br>     * @param &lt;Response&gt;<br>     */<br>    public static &lt;Request, Response&gt; ActivitiEngineResponse&lt;Response&gt; startEngine(String flowName,<br>                                                                                   ActivitiEngineRequest&lt;Request&gt; activitiEngineRequest) &#123;<br>        ActivitiFlow activitiFlow = getActivitiFlow(flowName);<br>        ActivitiEngineResponse&lt;Response&gt; activitiEngineResponse = new ActivitiEngineResponse&lt;&gt;();<br>        FlowNode curNode = activitiFlow.getStartNode();<br>        <span class="hljs-keyword">while</span> (curNode != null) &#123;<br>            FlowNodeType flowNodeType = curNode.getFlowNodeType();<br>            FlowNode nextFlow = null;<br>            switch (flowNodeType) &#123;<br>                <span class="hljs-keyword">case</span> START_EVENT:<br>                    <span class="hljs-keyword">break</span>;<br>                <span class="hljs-keyword">case</span> END_EVENT:<br>                    <span class="hljs-keyword">break</span>;<br>                <span class="hljs-keyword">case</span> SERVICE_TASK:<br>                    executeServiceTask(activitiEngineRequest, activitiEngineResponse, curNode);<br>                    <span class="hljs-keyword">break</span>;<br>                <span class="hljs-keyword">case</span> EXCLUSIVE_GATEWAY:<br>                    nextFlow = executeExclusiveGateway(activitiEngineRequest, activitiEngineResponse, curNode, activitiFlow);<br>                    <span class="hljs-keyword">break</span>;<br>            &#125;<br>            <span class="hljs-keyword">if</span> (nextFlow != null) &#123;<br>                curNode = nextFlow;<br>            &#125; <span class="hljs-keyword">else</span> &#123;<br>                curNode = activitiFlow.getNextNode(curNode);<br>            &#125;<br>        &#125;<br>        <span class="hljs-keyword">return</span> activitiEngineResponse;<br>    &#125;<br><br>    private static &lt;Request, Response&gt; FlowNode executeExclusiveGateway(ActivitiEngineRequest&lt;Request&gt; activitiEngineRequest,<br>                                                                    ActivitiEngineResponse&lt;Response&gt; activitiEngineResponse,<br>                                                                    FlowNode curNode,<br>                                                                    ActivitiFlow activitiFlow) &#123;<br>        IExclusiveGateway iExclusiveGateway = (IExclusiveGateway) curNode.getTarget();<br>        String credential = iExclusiveGateway.chooseNextNode(activitiEngineRequest, activitiEngineResponse);<br>        <span class="hljs-keyword">return</span> activitiFlow.chooseNextNode(curNode, credential);<br>    &#125;<br><br>    private static &lt;Request, Response&gt; void executeServiceTask(ActivitiEngineRequest&lt;Request&gt; activitiEngineRequest,<br>                                                               ActivitiEngineResponse&lt;Response&gt; activitiEngineResponse, FlowNode flowNode) &#123;<br>        IServiceTask iServiceTask = (IServiceTask) flowNode.getTarget();<br>        iServiceTask.execute(activitiEngineRequest, activitiEngineResponse);<br>    &#125;<br>&#125;<br><br></code></pre></td></tr></table></figure>
+
+<p>这里的IExclusiveGateway类定义如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs python">package com.yang.core.infrastructure.flow.activiti.function;<br><br><span class="hljs-keyword">import</span> com.yang.core.infrastructure.flow.activiti.request.ActivitiEngineRequest;<br><span class="hljs-keyword">import</span> com.yang.core.infrastructure.flow.activiti.response.ActivitiEngineResponse;<br><br>public interface IExclusiveGateway extends IActivitiService &#123;<br>    public static final String CREDENTIAL = <span class="hljs-string">&quot;credential&quot;</span>;<br><br>    default void execute(ActivitiEngineRequest request, ActivitiEngineResponse response) &#123;<br>        String credential = chooseNextNode(request, response);<br>        request.getContext().put(CREDENTIAL, credential);<br>    &#125;<br><br>    String chooseNextNode(ActivitiEngineRequest request, ActivitiEngineResponse response);<br><br>&#125;<br><br></code></pre></td></tr></table></figure>
+
+<p>其具体实现示例如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs python">package com.yang.business.activiti.login;<br><br><span class="hljs-keyword">import</span> com.yang.api.common.ErrorCode;<br><span class="hljs-keyword">import</span> com.yang.api.common.exception.UicException;<br><span class="hljs-keyword">import</span> com.yang.core.infrastructure.flow.activiti.function.IExclusiveGateway;<br><span class="hljs-keyword">import</span> com.yang.core.infrastructure.flow.activiti.request.ActivitiEngineRequest;<br><span class="hljs-keyword">import</span> com.yang.core.infrastructure.flow.activiti.response.ActivitiEngineResponse;<br><span class="hljs-keyword">import</span> org.springframework.stereotype.Component;<br><br><span class="hljs-meta">@Component</span><br>public <span class="hljs-keyword">class</span> <span class="hljs-title class_">NeedTransfer2IdentityExclusiveGateway</span> implements IExclusiveGateway &#123;<br><span class="hljs-meta">    @Override</span><br>    public String chooseNextNode(ActivitiEngineRequest request, ActivitiEngineResponse response) &#123;<br>        Object needIdentityObj = response.getContext().get(<span class="hljs-string">&quot;needIdentity&quot;</span>);<br>        <span class="hljs-keyword">if</span> (needIdentityObj != null) &#123;<br>            boolean needIdentity = (Boolean) needIdentityObj;<br>            <span class="hljs-keyword">if</span> (needIdentity) &#123;<br>                <span class="hljs-keyword">return</span> <span class="hljs-string">&quot;identity&quot;</span>;<br>            &#125;<br>            <span class="hljs-keyword">return</span> <span class="hljs-string">&quot;login&quot;</span>;<br>        &#125;<br>        throw new UicException(ErrorCode.ACTIVITI_EXECUTE_ERROR);<br>    &#125;<br>&#125;<br><br></code></pre></td></tr></table></figure>
+
+<h4 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h4><p>这里准备两个账号，一个普通账号，一个被盗账号，被盗账号会进入登录转核身节点，在该节点中，会打印控制台信息——“登录转核身&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;”，依次登录普通账号和被盗账号，结果如下：</p>
+<img src="/2024/10/05/%E6%B5%81%E7%A8%8B%E5%BC%95%E6%93%8E%E5%AE%9E%E7%8E%B0%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E6%8E%92%E4%BB%96%E7%BD%91%E5%85%B3/4.png" srcset="/img/loading.gif" lazyload class="">
+
+<img src="/2024/10/05/%E6%B5%81%E7%A8%8B%E5%BC%95%E6%93%8E%E5%AE%9E%E7%8E%B0%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E6%8E%92%E4%BB%96%E7%BD%91%E5%85%B3/5.png" srcset="/img/loading.gif" lazyload class="">
+
+<h3 id="规则引擎决策"><a href="#规则引擎决策" class="headerlink" title="规则引擎决策"></a>规则引擎决策</h3><p>上述实现方式，有一个问题在于，我们的判断条件是一个隐式的判断条件，即sequenceFlow线条上指定的credential值和IExclusiveGateway网关产出的值相同时，可以进入该sequenceFlow线条指引的分支连线。这其实就是一个等于的判断，但是这种判断方式不够灵活，如果我们后续的需求是某个值大于、小于或不等于时，才能进行分支，那么显然现在这种方式是不能满足的，因此，我们需要引入规则引擎，通过执行规则引擎的方式，来进行决策。</p>
+<p>整体的思路如下：</p>
+<ul>
+<li>网关节点，根据业务流程需要进行判断，并设置流程上下文值</li>
+<li>网关节点执行完毕后，根据sequenceFlow条件，和流程上下文信息，调用规则引擎，判断是否符合条件，符合条件则走到sequenceFlow对应分支</li>
+</ul>
+<h4 id="流程上下文参数简化"><a href="#流程上下文参数简化" class="headerlink" title="流程上下文参数简化"></a>流程上下文参数简化</h4><p>之前定义的ActivitiRequest和ActivitiResponse类的内容如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-meta">@Data</span><br>public <span class="hljs-keyword">class</span> <span class="hljs-title class_">ActivitiEngineRequest</span> &lt;T&gt; implements Serializable &#123;<br><br>    /**<br>     * 场景code<br>     */<br>    private String scenarioCode;<br><br>    private T baseRequest;<br><br>    private Map&lt;String, Object&gt; context = new HashMap&lt;&gt;();<br>&#125;<br><br><br><br><span class="hljs-meta">@Data</span><br>public <span class="hljs-keyword">class</span> <span class="hljs-title class_">ActivitiEngineResponse</span> &lt;T&gt; implements Serializable &#123;<br>    /**<br>     * 场景code<br>     */<br>    private String scenarioCode;<br><br>    private T response;<br><br>    private Map&lt;String, Object&gt; context = new HashMap&lt;&gt;();<br>&#125;<br><br></code></pre></td></tr></table></figure>
+
+<p>这两个类的字段有些重复，包括场景code和流程上下文context字段，特别是流程上下文字段，当我们需要塞值到上下文中时，有时候不好判断要放request的上下文还是response的上下文，其实感觉这里放request和放response都可以，为了减少歧义，这里将这两个类进行聚合，收敛到一个类中，即ActivitiExecuteContext类，其内容如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs python">package com.yang.core.infrastructure.flow.activiti.context;<br><br><span class="hljs-keyword">import</span> lombok.Data;<br><br><span class="hljs-keyword">import</span> java.io.Serializable;<br><span class="hljs-keyword">import</span> java.util.HashMap;<br><span class="hljs-keyword">import</span> java.util.Map;<br><br><span class="hljs-meta">@Data</span><br>public <span class="hljs-keyword">class</span> <span class="hljs-title class_">ActivitiExecuteContext</span>&lt;Request, Response&gt; implements Serializable &#123;<br>    /**<br>     * 场景code<br>     */<br>    private String scenarioCode;<br><br>    private Request baseRequest;<br>    <br>    private Response baseResponse;<br><br>    private Map&lt;String, Object&gt; context = new HashMap&lt;&gt;();<br>&#125;<br><br></code></pre></td></tr></table></figure>
+
+<p>通过ActivitiExecuteContext来替换原先的ActivitiEngineRequest和ActivitiEngineResponse, 所以要修改之前用到过那两个类的接口和实现：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><code class="hljs python">package com.yang.core.infrastructure.flow.activiti.function;<br><br><br><span class="hljs-keyword">import</span> com.yang.core.infrastructure.flow.activiti.context.ActivitiExecuteContext;<br><br>public interface IActivitiService &#123;<br>    void execute(ActivitiExecuteContext activitiExecuteContext);<br>&#125;<br><br><br>package com.yang.core.infrastructure.flow.activiti.function;<br><br><span class="hljs-keyword">import</span> com.yang.core.infrastructure.flow.activiti.context.ActivitiExecuteContext;<br><br>public interface IExclusiveGateway extends IActivitiService &#123;<br>    default void execute(ActivitiExecuteContext activitiExecuteContext) &#123;<br>        parseCredential(activitiExecuteContext);<br>    &#125;<br><br>    void parseCredential(ActivitiExecuteContext activitiExecuteContext);<br><br>&#125;<br><br><br>package com.yang.core.infrastructure.flow.activiti.function;<br><br><span class="hljs-keyword">import</span> com.yang.core.infrastructure.flow.activiti.context.ActivitiExecuteContext;<br>public interface IServiceTask&lt;DomainRequest, DomainResponse&gt; extends IActivitiService &#123;<br>    default void execute(ActivitiExecuteContext activitiExecuteContext) &#123;<br>        DomainRequest domainRequest = buildDomainRequest(activitiExecuteContext);<br>        <span class="hljs-keyword">if</span> (domainRequest != null) &#123;<br>            DomainResponse domainResponse = apply(domainRequest);<br>            attachment(domainResponse, activitiExecuteContext);<br>            <span class="hljs-keyword">return</span>;<br>        &#125;<br>        doElse(activitiExecuteContext);<br>    &#125;<br><br>    /**<br>     * 默认不实现，一般先转为domain Request，然后调用领域层方法，进行转化，doElse适用于目前领域层无法支持相关实现，顾需要在activity层进行适配的逻辑<br>     */<br>    default void doElse(ActivitiExecuteContext activitiExecuteContext) &#123;&#125;<br><br>    /**<br>     * 入参转化<br>     * @param activitiExecuteContext<br>     * @<span class="hljs-keyword">return</span><br>     */<br>    DomainRequest buildDomainRequest(ActivitiExecuteContext activitiExecuteContext);<br><br>    /**<br>     * 领域服务调用<br>     * @param domainRequest<br>     * @<span class="hljs-keyword">return</span><br>     */<br>    DomainResponse apply(DomainRequest domainRequest);<br><br>    /**<br>     * 领域服务调用结果填充<br>     * @param domainResponse<br>     * @param activitiExecuteContext<br>     */<br>    void attachment(DomainResponse domainResponse, ActivitiExecuteContext activitiExecuteContext);<br>&#125;<br><br></code></pre></td></tr></table></figure>
+
+<h4 id="引入规则引擎"><a href="#引入规则引擎" class="headerlink" title="引入规则引擎"></a>引入规则引擎</h4><p>市面上常见的开源规则引擎有easy-rules、 Drools、Aviator，这里使用Aviator来作为规则引擎进行决策，首先引入相关的依赖：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python">&lt;dependency&gt;<br>           &lt;groupId&gt;com.googlecode.aviator&lt;/groupId&gt;<br>           &lt;artifactId&gt;aviator&lt;/artifactId&gt;<br>           &lt;version&gt;<span class="hljs-number">5.1</span><span class="hljs-number">.4</span>&lt;/version&gt;<br>       &lt;/dependency&gt;<br></code></pre></td></tr></table></figure>
+
+<p>然后创建相关的工具类</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs python">package com.yang.core.infrastructure.rule;<br><br><span class="hljs-keyword">import</span> com.googlecode.aviator.AviatorEvaluator;<br><br><span class="hljs-keyword">import</span> java.util.HashMap;<br><span class="hljs-keyword">import</span> java.util.Map;<br><br>public <span class="hljs-keyword">class</span> <span class="hljs-title class_">AviatorUtil</span> &#123;<br>    public static Object execute(String condition, Map&lt;String, Object&gt; env) &#123;<br>        <span class="hljs-keyword">return</span> AviatorEvaluator.execute(condition, env);<br>    &#125;<br><br>    public static boolean <span class="hljs-keyword">match</span>(String condition, Map&lt;String, Object&gt; env) &#123;<br>        <span class="hljs-keyword">return</span> (Boolean) execute(condition, env);<br>    &#125;<br><br>    public static void main(String[] args) &#123;<br>        Map&lt;String, Object&gt; env = new HashMap&lt;&gt;();<br>        env.put(<span class="hljs-string">&quot;flow&quot;</span>, <span class="hljs-string">&quot;identity&quot;</span>);<br>        String condition = <span class="hljs-string">&quot;flow == &#x27;identity&#x27;&quot;</span>;<br>        System.out.println(<span class="hljs-keyword">match</span>(condition, env));<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h4 id="修改流程配置"><a href="#修改流程配置" class="headerlink" title="修改流程配置"></a>修改流程配置</h4><p>原先的网关连线，通过credential来拦截是否符合条件，现在我们引入规则引擎后，可以在sequenceFlow上，通过表达式来进行拦截判断，首先修改sequenceFlow，添加condition条件字段</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs python">package com.yang.core.infrastructure.flow.activiti.model;<br><br><span class="hljs-keyword">import</span> lombok.Data;<br><br><span class="hljs-keyword">import</span> java.io.Serializable;<br><br><span class="hljs-meta">@Data</span><br>public <span class="hljs-keyword">class</span> <span class="hljs-title class_">SequenceFlowNode</span> implements Serializable &#123;<br><br>    private String source;<br><br>    private String target;<br><br>    private String condition;<br><br>&#125;<br><br></code></pre></td></tr></table></figure>
+
+<p>然后修改流程配置文件</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs python">&lt;?xml version=<span class="hljs-string">&quot;1.0&quot;</span> encoding=<span class="hljs-string">&quot;UTF-8&quot;</span> standalone=<span class="hljs-string">&quot;yes&quot;</span>?&gt;<br>&lt;activiti <span class="hljs-built_in">id</span>=<span class="hljs-string">&quot;register_flow&quot;</span>&gt;<br>    &lt;!--节点定义--&gt;<br>    &lt;startEvent <span class="hljs-built_in">id</span>=<span class="hljs-string">&quot;startEvent&quot;</span>/&gt;<br>    &lt;serviceTask <span class="hljs-built_in">id</span>=<span class="hljs-string">&quot;userLocate&quot;</span> name=<span class="hljs-string">&quot;userLocate&quot;</span> description=<span class="hljs-string">&quot;账号定位&quot;</span> <span class="hljs-keyword">class</span>=<span class="hljs-string">&quot;com.yang.business.activiti.login.UserLocateActivity&quot;</span>/&gt;<br>    &lt;serviceTask <span class="hljs-built_in">id</span>=<span class="hljs-string">&quot;passwordCheck&quot;</span> name=<span class="hljs-string">&quot;passwordCheck&quot;</span> description=<span class="hljs-string">&quot;密码检查&quot;</span> <span class="hljs-keyword">class</span>=<span class="hljs-string">&quot;com.yang.business.activiti.login.PasswordCheckActivity&quot;</span>/&gt;<br>    &lt;serviceTask <span class="hljs-built_in">id</span>=<span class="hljs-string">&quot;userAccountStatusCheck&quot;</span> name=<span class="hljs-string">&quot;userAccountStatusCheck&quot;</span> description=<span class="hljs-string">&quot;账号状态检查&quot;</span> <span class="hljs-keyword">class</span>=<span class="hljs-string">&quot;com.yang.business.activiti.login.UserAccountStatusCheckActivity&quot;</span>/&gt;<br>    &lt;exclusiveGateway <span class="hljs-built_in">id</span>=<span class="hljs-string">&quot;needBuildIdentityAction&quot;</span> name=<span class="hljs-string">&quot;needBuildIdentityAction&quot;</span> description=<span class="hljs-string">&quot;是否需要转核身&quot;</span> <span class="hljs-keyword">class</span>=<span class="hljs-string">&quot;com.yang.business.activiti.login.NeedTransfer2IdentityExclusiveGateway&quot;</span>/&gt;<br>    &lt;serviceTask <span class="hljs-built_in">id</span>=<span class="hljs-string">&quot;buildIdentityAction&quot;</span> name=<span class="hljs-string">&quot;buildIdentityAction&quot;</span> description=<span class="hljs-string">&quot;核身行为构建&quot;</span> <span class="hljs-keyword">class</span>=<span class="hljs-string">&quot;com.yang.business.activiti.login.BuildIdentityActionActivity&quot;</span>/&gt;<br>    &lt;serviceTask <span class="hljs-built_in">id</span>=<span class="hljs-string">&quot;buildUserToken&quot;</span> name=<span class="hljs-string">&quot;buildUserToken&quot;</span> description=<span class="hljs-string">&quot;创建用户token&quot;</span> <span class="hljs-keyword">class</span>=<span class="hljs-string">&quot;com.yang.business.activiti.common.BuildUserTokenActivity&quot;</span>/&gt;<br>    &lt;endEvent <span class="hljs-built_in">id</span>=<span class="hljs-string">&quot;endEvent&quot;</span>/&gt;<br><br>    &lt;!--节点执行顺序编排--&gt;<br>    &lt;sequenceFlow source=<span class="hljs-string">&quot;startEvent&quot;</span> target=<span class="hljs-string">&quot;userLocate&quot;</span>/&gt;<br>    &lt;sequenceFlow source=<span class="hljs-string">&quot;userLocate&quot;</span> target=<span class="hljs-string">&quot;passwordCheck&quot;</span>/&gt;<br>    &lt;sequenceFlow source=<span class="hljs-string">&quot;passwordCheck&quot;</span> target=<span class="hljs-string">&quot;userAccountStatusCheck&quot;</span>/&gt;<br>    &lt;sequenceFlow source=<span class="hljs-string">&quot;userAccountStatusCheck&quot;</span> target=<span class="hljs-string">&quot;needBuildIdentityAction&quot;</span>/&gt;<br>    &lt;sequenceFlow source=<span class="hljs-string">&quot;needBuildIdentityAction&quot;</span> target=<span class="hljs-string">&quot;buildIdentityAction&quot;</span> condition=<span class="hljs-string">&quot;flow == &#x27;identity&#x27;&quot;</span>/&gt;<br>    &lt;sequenceFlow source=<span class="hljs-string">&quot;needBuildIdentityAction&quot;</span> target=<span class="hljs-string">&quot;buildUserToken&quot;</span> condition=<span class="hljs-string">&quot;flow == &#x27;login&#x27;&quot;</span>/&gt;<br>    &lt;sequenceFlow source=<span class="hljs-string">&quot;buildIdentityAction&quot;</span> target=<span class="hljs-string">&quot;buildUserToken&quot;</span>/&gt;<br>    &lt;sequenceFlow source=<span class="hljs-string">&quot;buildUserToken&quot;</span> target=<span class="hljs-string">&quot;endEvent&quot;</span>/&gt;<br>&lt;/activiti&gt;<br></code></pre></td></tr></table></figure>
+
+<p>从上面的配置文件中，我们可以看出，当上下文的flow值为identity时，走buildIdentityAction节点，当上下文的flow值为login时，走buildUserToken节点，那么，在网关节点needBuildIdentityAction中，它的作用就是根据流程当前执行内容，对流程上下文的flow进行赋值，其具体实现如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs python">package com.yang.business.activiti.login;<br><br><span class="hljs-keyword">import</span> com.yang.api.common.ErrorCode;<br><span class="hljs-keyword">import</span> com.yang.api.common.exception.UicException;<br><span class="hljs-keyword">import</span> com.yang.core.infrastructure.flow.activiti.context.ActivitiExecuteContext;<br><span class="hljs-keyword">import</span> com.yang.core.infrastructure.flow.activiti.function.IExclusiveGateway;<br><span class="hljs-keyword">import</span> org.springframework.stereotype.Component;<br><br><span class="hljs-meta">@Component</span><br>public <span class="hljs-keyword">class</span> <span class="hljs-title class_">NeedTransfer2IdentityExclusiveGateway</span> implements IExclusiveGateway &#123;<br><span class="hljs-meta">    @Override</span><br>    public void parseCredential(ActivitiExecuteContext activitiExecuteContext) &#123;<br>        Object needIdentityObj = activitiExecuteContext.getContext().get(<span class="hljs-string">&quot;needIdentity&quot;</span>);<br>        <span class="hljs-keyword">if</span> (needIdentityObj != null) &#123;<br>            boolean needIdentity = (Boolean) needIdentityObj;<br>            <span class="hljs-keyword">if</span> (needIdentity) &#123;<br>                activitiExecuteContext.getContext().put(<span class="hljs-string">&quot;flow&quot;</span>, <span class="hljs-string">&quot;identity&quot;</span>);<br>                <span class="hljs-keyword">return</span>;<br>            &#125;<br>            activitiExecuteContext.getContext().put(<span class="hljs-string">&quot;flow&quot;</span>, <span class="hljs-string">&quot;login&quot;</span>);<br>            <span class="hljs-keyword">return</span>;<br>        &#125;<br>        throw new UicException(ErrorCode.ACTIVITI_EXECUTE_ERROR);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>然后，因为我们之前将决策的逻辑放到activitiFlow类中，所以这里需要对activitiFlow的决策方法进行修改，修改内容如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><code class="hljs python">package com.yang.core.infrastructure.flow.activiti.model;<br><br><span class="hljs-keyword">import</span> com.yang.core.infrastructure.rule.AviatorUtil;<br><span class="hljs-keyword">import</span> lombok.Data;<br><br><span class="hljs-keyword">import</span> java.util.ArrayList;<br><span class="hljs-keyword">import</span> java.util.<span class="hljs-type">List</span>;<br><span class="hljs-keyword">import</span> java.util.Map;<br><br><span class="hljs-meta">@Data</span><br>public <span class="hljs-keyword">class</span> <span class="hljs-title class_">ActivitiFlow</span> &#123;<br>    private String <span class="hljs-built_in">id</span>;<br><br>    private FlowNode startNode;<br><br>    private FlowNode endNode;<br><br>    private <span class="hljs-type">List</span>&lt;SequenceFlowNode&gt; sequenceFlowNodeList;<br><br>    private Map&lt;String, FlowNode&gt; nodeId2FlowNodeMap;<br><br>    public FlowNode chooseNextNode(FlowNode curNode, Map&lt;String, Object&gt; flowContext) &#123;<br>        String sourceNodeId = curNode.getId();<br>        String targetNodeId = null;<br>        <span class="hljs-type">List</span>&lt;SequenceFlowNode&gt; sequenceFlowNodes = new ArrayList&lt;&gt;();<br>        <span class="hljs-keyword">for</span> (SequenceFlowNode sequenceFlowNode : sequenceFlowNodeList) &#123;<br>            <span class="hljs-keyword">if</span> (sequenceFlowNode.getSource().equals(sourceNodeId)) &#123;<br>                sequenceFlowNodes.add(sequenceFlowNode);<br>            &#125;<br>        &#125;<br>        <span class="hljs-keyword">if</span> (sequenceFlowNodes.size() == <span class="hljs-number">1</span>) &#123;<br>            targetNodeId = sequenceFlowNodes.get(<span class="hljs-number">0</span>).getTarget();<br>        &#125; <span class="hljs-keyword">else</span> &#123;<br>            // 网关判断<br>            <span class="hljs-keyword">for</span> (SequenceFlowNode sequenceFlowNode : sequenceFlowNodes) &#123;<br>                String condition = sequenceFlowNode.getCondition();<br>                <span class="hljs-keyword">if</span> (AviatorUtil.<span class="hljs-keyword">match</span>(condition, flowContext)) &#123;<br>                    targetNodeId = sequenceFlowNode.getTarget();<br>                    <span class="hljs-keyword">break</span>;<br>                &#125;<br>            &#125;<br>        &#125;<br>        <span class="hljs-keyword">return</span> nodeId2FlowNodeMap.get(targetNodeId);<br>    &#125;<br><br>&#125;<br><br></code></pre></td></tr></table></figure>
+
+<h4 id="测试-1"><a href="#测试-1" class="headerlink" title="测试"></a>测试</h4><p>启动项目，分别测试普通账号和被盗账号，结果如下：</p>
+<img src="/2024/10/05/%E6%B5%81%E7%A8%8B%E5%BC%95%E6%93%8E%E5%AE%9E%E7%8E%B0%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E6%8E%92%E4%BB%96%E7%BD%91%E5%85%B3/4.png" srcset="/img/loading.gif" lazyload class="">
+
+<img src="/2024/10/05/%E6%B5%81%E7%A8%8B%E5%BC%95%E6%93%8E%E5%AE%9E%E7%8E%B0%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E6%8E%92%E4%BB%96%E7%BD%91%E5%85%B3/5.png" srcset="/img/loading.gif" lazyload class="">
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E5%B7%A5%E4%BD%9C%E7%A7%AF%E7%B4%AF/" class="print-no-link">#工作积累</a>
+      
+        <a href="/tags/%E6%B5%81%E7%A8%8B%E5%BC%95%E6%93%8E/" class="print-no-link">#流程引擎</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>流程引擎实现（二）—排他网关</div>
+      <div>https://cxydhi.github.io/2024/10/05/流程引擎实现（二）—排他网关/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>沉河不浮</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年10月5日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/10/04/SpringBoot%E6%97%A5%E5%BF%97%E6%89%93%E5%8D%B0%E5%AE%9E%E8%B7%B5/" title="SpringBoot日志打印实践">
+                        <span class="hidden-mobile">SpringBoot日志打印实践</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
